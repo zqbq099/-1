@@ -23,7 +23,7 @@ const zikirData = [
   { text: "سبحان الله\nوبحمده", spokenText: "سُبْحَانَ اللهِ وَبِحَمْدِهْ", color: "#a855f7", base: "#7e22ce" }, 
   { text: "سبحان ربي\nالعظيم", spokenText: "سُبْحَانَ رَبِّيَ الْعَظِيمْ", color: "#14b8a6", base: "#0f766e" }, 
   { text: "أَسْتَغْفِرُ\nالله", spokenText: "أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهْ", color: "#ec4899", base: "#be185d" },
-  { text: "اللهم صلِ\nعلى محمد", spokenText: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّد", color: "#f97316", base: "#c2410c" },
+  { text: "اللهم صلِ\nعلى نبينا\nمحمد وآله", spokenText: "اللَّهُمَّ صَلِّ عَلَى نَبِيِّنَا مُحَمَّدٍ وَآلِهْ", color: "#f97316", base: "#c2410c" },
   { text: "يا حي\nيا قيوم", spokenText: "يَا حَيُّ يَا قَيُّوم", color: "#6366f1", base: "#4338ca" },
   { text: "يا\nلطيف", spokenText: "يَا لَطِيف", color: "#f43f5e", base: "#e11d48" },
   { text: "حسبي الله\nونعم الوكيل", spokenText: "حَسْبِيَ اللهُ وَنِعْمَ الْوَكِيل", color: "#84cc16", base: "#4d7c0f" },
@@ -356,11 +356,15 @@ export default function App() {
         }
 
         const lines = tile.text.split('\n');
+        const lineHeight = 20;
+        const totalHeight = lines.length * lineHeight;
+        const startY = y + TILE_SIZE / 2 - totalHeight / 2 + lineHeight / 2;
+        
         lines.forEach((line: string, i: number) => {
           ctx.shadowColor = "rgba(0,0,0,0.4)";
           ctx.shadowBlur = 4;
           ctx.shadowOffsetY = 2;
-          ctx.fillText(line, x + TILE_SIZE / 2, y + TILE_SIZE / 2 + (i * 20) - 5);
+          ctx.fillText(line, x + TILE_SIZE / 2, startY + (i * lineHeight));
           ctx.shadowColor = "transparent";
         });
     };
@@ -373,8 +377,9 @@ export default function App() {
       boardRef.current.forEach(row => row.forEach(tile => {
         if (!tile) return;
         
-        // If it's a dragged tile or its neighbor, save it for later drawing on top
-        if (tile.offsetX !== 0 || tile.offsetY !== 0) {
+        const isSelected = firstTileRef.current?.r === tile.r && firstTileRef.current?.c === tile.c;
+        // If it's a dragged tile, its neighbor, or selected, save it for later drawing on top
+        if (tile.offsetX !== 0 || tile.offsetY !== 0 || isSelected) {
             draggedTiles.push(tile);
             return;
         }
@@ -1033,8 +1038,8 @@ export default function App() {
       if (isAnimatingRef.current || !dragStartRef.current || !firstTileRef.current) return;
       
       const { x, y } = getScaledCoords(e, true);
-      const dx = x - dragStartRef.current.x;
-      const dy = y - dragStartRef.current.y;
+      let dx = x - dragStartRef.current.x;
+      let dy = y - dragStartRef.current.y;
       
       const { r, c } = firstTileRef.current;
       const tile = boardRef.current[r]?.[c];
@@ -1044,12 +1049,20 @@ export default function App() {
         return;
       }
 
+      if (!dragDirectionRef.current) {
+         if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 4) dragDirectionRef.current = 'x';
+         else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 4) dragDirectionRef.current = 'y';
+      }
+
+      if (dragDirectionRef.current === 'x') dy = 0;
+      else if (dragDirectionRef.current === 'y') dx = 0;
+      
       // 1:1 MOVEMENT: Tile follows finger exactly for maximum responsiveness
       tile.offsetX = dx;
       tile.offsetY = dy;
 
       const moveDist = Math.max(Math.abs(dx), Math.abs(dy));
-      const SWIPE_THRESHOLD = TILE_SIZE * 0.35; // Lowered from 0.4 for snappier response
+      const SWIPE_THRESHOLD = TILE_SIZE * 0.20; // Lowered to 0.20 (approx 12-14px) for ultra snappy response
 
       if (moveDist > SWIPE_THRESHOLD) {
         const isX = Math.abs(dx) > Math.abs(dy);
