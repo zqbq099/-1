@@ -16,29 +16,27 @@ const soundEffects = {
 };
 
 const zikirData = [
-  { text: "سبحان\nالله", spokenText: "سُبْحَانَ اللهْ", color: "#60a5fa", base: "#1d4ed8" }, 
-  { text: "الحمد\nلله", spokenText: "الْحَمْدُ لِلَّهْ", color: "#4ade80", base: "#15803d" }, 
-  { text: "لا إله\nإلا الله", spokenText: "لَا إِلَهَ إِلَّا اللهْ", color: "#fbbf24", base: "#b45309" }, 
-  { text: "الله\nأكبر", spokenText: "اللهُ أَكْبَر", color: "#f87171", base: "#b91c1c" }, 
-  { text: "سبحان الله\nوبحمده", spokenText: "سُبْحَانَ اللهِ وَبِحَمْدِهْ", color: "#c084fc", base: "#7e22ce" }, 
-  { text: "سبحان ربي\nالعظيم", spokenText: "سُبْحَانَ رَبِّيَ الْعَظِيمْ", color: "#2dd4bf", base: "#0f766e" }, 
-  { text: "أستغفر الله\nوأتوب إليه", spokenText: "أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهْ", color: "#f472b6", base: "#be185d" },
-  { text: "لا حول ولا\nقوة إلا بالله", spokenText: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهْ", color: "#94a3b8", base: "#475569" },
-  { text: "اللهم صلِ\nعلى محمد", spokenText: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّد", color: "#4ade80", base: "#166534" },
-  { text: "يا حي\nيا قيوم", spokenText: "يَا حَيُّ يَا قَيُّوم", color: "#60a5fa", base: "#1e3a8a" },
-  { text: "يا لطيف", spokenText: "يَا لَطِيف", color: "#fb7185", base: "#e11d48" },
-  { text: "حسبي الله\nونعم الوكيل", spokenText: "حَسْبِيَ اللهُ وَنِعْمَ الْوَكِيل", color: "#34d399", base: "#059669" },
-  { text: "سبحان الله\nالعظيم", spokenText: "سُبْحَانَ اللهِ الْعَظِيم", color: "#a78bfa", base: "#6d28d9" },
-  { text: "تبارك الله", spokenText: "تَبَارَكَ الله", color: "#fb923c", base: "#ea580c" }
+  { text: "سُبْحَانَ\nالله", spokenText: "سُبْحَانَ الله", color: "#3b82f6", base: "#1d4ed8" }, 
+  { text: "الْحَمْدُ\nلله", spokenText: "الْحَمْدُ لله", color: "#10b981", base: "#047857" }, 
+  { text: "لَا إِلَهَ\nإِلَّا الله", spokenText: "لَا إِلَهَ إِلَّا الله", color: "#f59e0b", base: "#b45309" }, 
+  { text: "اللهُ\nأَكْبَر", spokenText: "اللهُ أَكْبَر", color: "#ef4444", base: "#b91c1c" }, 
+  { text: "سبحان الله\nوبحمده", spokenText: "سُبْحَانَ اللهِ وَبِحَمْدِهْ", color: "#a855f7", base: "#7e22ce" }, 
+  { text: "سبحان ربي\nالعظيم", spokenText: "سُبْحَانَ رَبِّيَ الْعَظِيمْ", color: "#14b8a6", base: "#0f766e" }, 
+  { text: "أَسْتَغْفِرُ\nالله", spokenText: "أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهْ", color: "#ec4899", base: "#be185d" },
+  { text: "اللهم صلِ\nعلى محمد", spokenText: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّد", color: "#f97316", base: "#c2410c" },
+  { text: "يا حي\nيا قيوم", spokenText: "يَا حَيُّ يَا قَيُّوم", color: "#6366f1", base: "#4338ca" },
+  { text: "يا\nلطيف", spokenText: "يَا لَطِيف", color: "#f43f5e", base: "#e11d48" },
+  { text: "حسبي الله\nونعم الوكيل", spokenText: "حَسْبِيَ اللهُ وَنِعْمَ الْوَكِيل", color: "#84cc16", base: "#4d7c0f" },
+  { text: "يا ذا الجلال\nوالإكرام", spokenText: "يَا ذَا الْجَلَالِ وَالْإِكْرَام", color: "#06b6d4", base: "#0891b2" }
 ];
 
 const LEVELS = [
-  { target: 2000, zikirs: 8 },
-  { target: 5000, zikirs: 9 },
-  { target: 10000, zikirs: 10 },
-  { target: 20000, zikirs: 12 },
-  { target: 40000, zikirs: 14 },
-  { target: 100000, zikirs: 14 }
+  { target: 1500, zikirs: 5 },
+  { target: 4000, zikirs: 6 },
+  { target: 8000, zikirs: 7 },
+  { target: 15000, zikirs: 8 },
+  { target: 30000, zikirs: 9 },
+  { target: 60000, zikirs: 10 }
 ];
 
 export default function App() {
@@ -60,7 +58,7 @@ export default function App() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [isVictory, setIsVictory] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [bgColor, setBgColor] = useState("#0f172a"); // Default deep blue
+  const [bgColor, setBgColor] = useState("#052e16"); // Deep nature green
   
   const titles = ["ذاكر", "مسبّح", "قانت", "منيب", "مخبت", "صديق"];
   const currentTitle = titles[Math.min(level - 1, titles.length - 1)];
@@ -209,7 +207,7 @@ export default function App() {
       playMatchSound(isSuper);
 
       // Balanced density for beauty and performance
-      const count = isSuper ? 25 : 12; 
+      const count = isSuper ? 12 : 6; 
       
       // Precise color detection for variety
       let flowers = ["🌸"]; 
@@ -223,7 +221,7 @@ export default function App() {
       for(let i = 0; i < count; i++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
         const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (2 + Math.random() * 5) * 6; 
+        const speed = (2 + Math.random() * 5) * 24; 
         particlesRef.current.push({
           x: x, y: y,
           vx: Math.cos(angle) * speed,
@@ -258,9 +256,9 @@ export default function App() {
         p.x += p.vx;
         p.y += p.vy;
         p.vx += Math.sin(p.rotation) * p.drift; // Natural sway
-        p.vy += 0.2; // Lighter gravity for flowers
-        p.life -= 0.012; // Longer life for better visual
-        p.rotation += p.rotSpeed * 0.8; // Apply the fast rotation speed
+        p.vy += 0.8; // Slightly stronger gravity for faster motion
+        p.life -= 0.048; // Faster decay since they move faster
+        p.rotation += p.rotSpeed * 3.2; // Double rotation speed for energy
         
         if (p.life <= 0) {
           particlesRef.current.splice(i, 1);
@@ -484,7 +482,7 @@ export default function App() {
       const tile1 = boardRef.current[r1]?.[c1];
       const tile2 = boardRef.current[r2]?.[c2];
       
-      const duration = 60; // 3x faster (was 120)
+      const duration = 80; // Ultra fast swap
       const startTime = performance.now();
       const dx = (c2 - c1) * TILE_SIZE;
       const dy = (r2 - r1) * TILE_SIZE;
@@ -656,9 +654,10 @@ export default function App() {
       let r0 = parseInt(firstMatchKey[0]);
       let c0 = parseInt(firstMatchKey[1]);
       let matchedTile = boardRef.current[r0][c0];
+      if (!matchedTile) return;
       let matchColor = matchedTile.color;
-      
-      // V2: Check for special tile activation
+
+      // Check for special tile activation
       let specialToTrigger: any[] = [];
       matches.forEach(key => {
           const [r, c] = key.split(',').map(Number);
@@ -681,133 +680,109 @@ export default function App() {
           });
       }
 
-      // V2: Create new special tiles if match is big enough
+      // Create new special tiles if match is big enough
       let specialPos: {r: number, c: number} | null = null;
+      let type: any = null;
       if (matches.size === 4) {
-          // Find if it was horizontal or vertical
           const keys = Array.from(matches).map(k => k.split(',').map(Number));
           const isHorizontal = keys.every(k => k[0] === keys[0][0]);
           specialPos = { r: keys[0][0], c: keys[0][1] };
-          var type: 'row'|'col' = isHorizontal ? 'row' : 'col';
+          type = isHorizontal ? 'row' : 'col';
       } else if (matches.size >= 5) {
           const keys = Array.from(matches).map(k => k.split(',').map(Number));
           specialPos = { r: keys[0][0], c: keys[0][1] };
-          var typeSuper: 'super' = 'super';
+          type = 'super';
       }
 
       cascadeCountRef.current += 1;
-
       let speechCalled = false;
       if (shouldSpeak) {
          playSound('match');
          vibrate(20);
-         // triggerShake removed 
          
-         let spoken = matchedTile.spokenText;
+         const spoken = matchedTile.spokenText;
 
          if (cascadeCountRef.current === 3) {
             speak({ text: matchedTile.text, spokenText: spoken });
-            speak({ text: "مجموعة 3", spokenText: "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدْ وَعَلَىٰ آلِ مُحَمَّدْ", onComplete });
+            speak({ text: "مجموعة 3", spokenText: "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدْ وَعَلَىٰ آلِ مُحَمَّدْ" });
          } else if (cascadeCountRef.current >= 4) {
             speak({ text: matchedTile.text, spokenText: spoken });
-            speak({ text: "مجموعة 4+", spokenText: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَىٰ نَبِيِّنَا مُحَمَّدْ", onComplete });
+            speak({ text: "مجموعة 4+", spokenText: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَىٰ نَبِيِّنَا مُحَمَّدْ" });
          } else {
-            speak({ text: matchedTile.text, spokenText: spoken, onComplete });
+            speak({ text: matchedTile.text, spokenText: spoken });
          }
+         
+         if (onComplete) setTimeout(onComplete, 150);
          speechCalled = true;
-      }
-      
-      matches.forEach(key => {
-        let [rStr, cStr] = key.split(',');
-        let r = parseInt(rStr);
-        let c = parseInt(cStr);
-        if (shouldSpeak) {
-          // V2: More particles for bigger matches or special tiles
-          const isBigExplosion = matches.size > 5 || specialToTrigger.length > 0;
-          createParticles(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, matchColor, isBigExplosion);
-          
-          if (boardRef.current[r][c] && canvasRef.current) {
-            const rect = canvasRef.current.getBoundingClientRect();
-            // Calculate screen coordinates
-            const scaleX = rect.width / (COLS * TILE_SIZE);
-            const scaleY = rect.height / (ROWS * TILE_SIZE);
-            
-            const screenX = rect.left + (c * TILE_SIZE + TILE_SIZE/2) * scaleX;
-            const screenY = rect.top + (r * TILE_SIZE + TILE_SIZE/2) * scaleY;
 
-            const id = Date.now().toString() + Math.random().toString();
-            const text = boardRef.current[r][c].text;
+         setBgColor(matchColor + "44");
+         setTimeout(() => setBgColor("#052e16"), 600);
+
+         comboRef.current += 1;
+         setCombo(comboRef.current);
+         
+         const multiplier = Math.max(1, comboRef.current);
+         const points = matches.size * 10 * multiplier;
+         const oldScore = scoreRef.current;
+         scoreRef.current += points;
+         setScore(scoreRef.current);
+
+         if (comboRef.current > 1) {
+            const messages = ["مَا شَاءَ اللَّه", "تَبَارَكَ اللَّه", "أَحْسَنْت", "تَسْبِيحٌ مُبَارَك"];
+            const msg = messages[Math.floor(Math.random() * messages.length)];
+            setComboMessage(msg);
             
-            const drift = (Math.random() - 0.5) * 600; // Increased spread for tree effect
-            setFloatingWords(prev => [...prev, { id, text, x: screenX, y: screenY, drift }]);
-            setTimeout(() => {
-              setFloatingWords(prev => prev.filter(w => w.id !== id));
-            }, 8500); // Sink with 8.5s duration (matching animation)
-          }
+            const id = "combo-" + Date.now().toString();
+            setFloatingWords(prev => [...prev, { id, text: msg, x: window.innerWidth / 2, y: window.innerHeight / 2 - 100, drift: (Math.random() - 0.5) * 300, type: 'combo' }]);
+            setTimeout(() => setFloatingWords(prev => prev.filter(w => w.id !== id)), 6000);
+         }
+
+         const currentTargetScore = LEVELS[levelRef.current - 1]?.target || 100000;
+         if (oldScore < currentTargetScore && scoreRef.current >= currentTargetScore) {
+             if (levelRef.current === LEVELS.length) {
+               setIsVictory(true);
+               return; 
+             }
+             speak({ text: "مرحلة جديدة", spokenText: "مَا شَاءَ اللَّهُ لَا قُوَّةَ إِلَّا بِاللَّهْ" });
+             setShowLevelUp(true);
+             playSound('levelUp');
+         }
+      }
+
+      matches.forEach(key => {
+        const [r, c] = key.split(',').map(Number);
+        const tile = boardRef.current[r][c];
+        if (tile) {
+           tile.scale = 1.4;
+           tile.opacity = 0;
+           createParticles(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, matchColor, matches.size > 5);
+           
+           if (shouldSpeak && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleX = rect.width / (COLS * TILE_SIZE);
+              const scaleY = rect.height / (ROWS * TILE_SIZE);
+              const screenX = rect.left + (c * TILE_SIZE + TILE_SIZE/2) * scaleX;
+              const screenY = rect.top + (r * TILE_SIZE + TILE_SIZE/2) * scaleY;
+              const id = Date.now().toString() + Math.random().toString();
+              setFloatingWords(prev => [...prev, { id, text: tile.text, x: screenX, y: screenY, drift: (Math.random() - 0.5) * 600 }]);
+              setTimeout(() => setFloatingWords(prev => prev.filter(w => w.id !== id)), 8000);
+           }
         }
         boardRef.current[r][c] = null;
       });
 
-      // V2: Place the special tile after clearing
       if (specialPos && matchedTile) {
-          const {r, c} = specialPos;
-          boardRef.current[r][c] = { 
-            ...matchedTile, 
-            r, c, 
-            isSpecial: type || typeSuper,
-            offsetX: 0, offsetY: 0 
-          };
+        boardRef.current[specialPos.r][specialPos.c] = { 
+          ...matchedTile, 
+          r: specialPos.r, 
+          c: specialPos.c, 
+          isSpecial: type, 
+          offsetX: 0, 
+          offsetY: 0 
+        };
       }
-      
-      if (shouldSpeak) {
-        // V2: Update Background Color based on match
-        setBgColor(matchColor + "44"); // Add transparency
-        setTimeout(() => setBgColor("#0f172a"), 800);
 
-        // Update Combo
-        comboRef.current += 1;
-        setCombo(comboRef.current);
-        
-        const multiplier = Math.max(1, comboRef.current);
-        const points = matches.size * 10 * multiplier;
-        const oldScore = scoreRef.current;
-        scoreRef.current += points;
-        setScore(scoreRef.current);
-
-        if (comboRef.current > 1) {
-          const messages = ["مَا شَاءَ اللَّه", "تَبَارَكَ اللَّه", "أَحْسَنْت", "تَسْبِيحٌ مُبَارَك"];
-          const msg = messages[Math.floor(Math.random() * messages.length)];
-          setComboMessage(msg);
-          
-          // Add floating combo message
-          const id = "combo-" + Date.now().toString();
-          const drift = (Math.random() - 0.5) * 300;
-          setFloatingWords(prev => [...prev, { id, text: msg, x: window.innerWidth / 2, y: window.innerHeight / 2 - 100, drift, type: 'combo' }]);
-          setTimeout(() => {
-            setFloatingWords(prev => prev.filter(w => w.id !== id));
-          }, 12500);
-        }
-
-        const currentTargetScore = 3000 * Math.pow(2, levelRef.current - 1);
-        if (oldScore < currentTargetScore && scoreRef.current >= currentTargetScore) {
-             isAnimatingRef.current = true;
-             
-             if (levelRef.current === LEVELS.length) {
-               setIsVictory(true);
-               playSound('levelUp');
-               vibrate([100, 50, 100, 50, 200]);
-               return; 
-             }
-
-             speak({ text: "مرحلة جديدة", spokenText: "مَا شَاءَ اللَّهُ لَا قُوَّةَ إِلَّا بِاللَّهْ" });
-             setShowLevelUp(true);
-             playSound('levelUp');
-             vibrate([100, 50, 100, 50, 200]);
-         }
-      }
-      if (!speechCalled && onComplete) {
-         onComplete();
-      }
+      if (!speechCalled && onComplete) onComplete();
     };
 
     const hasMatchesOnBoard = () => {
@@ -954,14 +929,16 @@ export default function App() {
     };
     gameActionsRef.current = { initBoard };
 
-    const getScaledCoords = (e: MouseEvent | TouchEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const isTouch = 'touches' in e;
+    let cachedRect: DOMRect | null = null;
+
+    const getScaledCoords = (e: MouseEvent | TouchEvent, useCache = false) => {
+      const rect = useCache && cachedRect ? cachedRect : canvas.getBoundingClientRect();
+      if (!useCache) cachedRect = rect;
       
+      const isTouch = 'touches' in e;
       let clientX, clientY;
       if (isTouch) {
         const touchEvent = e as TouchEvent;
-        // Search in touches, then changedTouches for touchend events
         const touch = touchEvent.touches[0] || touchEvent.changedTouches[0];
         clientX = touch.clientX;
         clientY = touch.clientY;
@@ -979,21 +956,21 @@ export default function App() {
     };
 
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
-      // Prevent scrolling while playing
       if (e.cancelable) e.preventDefault();
-      if (isAnimatingRef.current) return;
       
-      resetIdleTimer();
-      cascadeCountRef.current = 0; 
-      dragDirectionRef.current = null;
-      
-      const { x, y } = getScaledCoords(e);
+      cachedRect = canvas.getBoundingClientRect(); // Cache rect once on down
+      const { x, y } = getScaledCoords(e, true);
       const c = Math.floor(x / TILE_SIZE);
       const r = Math.floor(y / TILE_SIZE);
       
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+      if (isAnimatingRef.current) return;
 
-      vibrate(12); // Slightly firmer haptic for better tactile feedback
+      resetIdleTimer();
+      cascadeCountRef.current = 0; 
+      dragDirectionRef.current = null;
+      
+      // No vibrate here to ensure 0ms input lag
       dragStartRef.current = { r, c, x, y };
       
       if (firstTileRef.current) {
@@ -1021,7 +998,7 @@ export default function App() {
       if (e.cancelable) e.preventDefault();
       if (isAnimatingRef.current || !dragStartRef.current || !firstTileRef.current) return;
       
-      const { x, y } = getScaledCoords(e);
+      const { x, y } = getScaledCoords(e, true);
       const dx = x - dragStartRef.current.x;
       const dy = y - dragStartRef.current.y;
       
@@ -1033,12 +1010,12 @@ export default function App() {
         return;
       }
 
-      // Responsive dragging - visual feedback
-      tile.offsetX = dx * 0.8; // Added slight dampening for natural feel
-      tile.offsetY = dy * 0.8;
+      // 1:1 MOVEMENT: Tile follows finger exactly for maximum responsiveness
+      tile.offsetX = dx;
+      tile.offsetY = dy;
 
       const moveDist = Math.max(Math.abs(dx), Math.abs(dy));
-      const SWIPE_THRESHOLD = TILE_SIZE * 0.4; // Slightly lower threshold for faster response
+      const SWIPE_THRESHOLD = TILE_SIZE * 0.35; // Lowered from 0.4 for snappier response
 
       if (moveDist > SWIPE_THRESHOLD) {
         const isX = Math.abs(dx) > Math.abs(dy);
@@ -1084,8 +1061,8 @@ export default function App() {
          const tile = boardRef.current[r]?.[c];
          
          if (tile && (tile.offsetX !== 0 || tile.offsetY !== 0)) {
-             // RUBBER BAND EFFECT: Animate back to zero
-             const duration = 120; // 20% faster return
+             // RUBBER BAND EFFECT: Ultra-fast return for snappy feel
+             const duration = 80; 
              const startTime = performance.now();
              const startX = tile.offsetX;
              const startY = tile.offsetY;
@@ -1093,7 +1070,8 @@ export default function App() {
              const returnAnim = (time: number) => {
                  const elapsed = time - startTime;
                  const progress = Math.min(1, elapsed / duration);
-                 const ease = progress * (2 - progress); // easeOutQuad
+                 // Linear out for mechanical feel, or easeOut for organic. Using simple linear for speed.
+                 const ease = progress; 
                  
                  if (progress < 1) {
                      tile.offsetX = startX * (1 - ease);
@@ -1187,19 +1165,23 @@ export default function App() {
     <div className="flex flex-col items-center min-h-screen relative font-sans overflow-hidden select-none touch-none"
          style={{ 
            background: `radial-gradient(circle at center, ${bgColor} 0%, #020617 100%)`,
-           transition: 'background 0.8s ease'
+           transition: 'background 0.8s ease-in-out'
          }}>
       
+      {/* Nature Theme Background Layers */}
+      <div className="mesh-bg" />
+      <div className="garden-pattern" />
+      
       {/* V2: Animated Spiritual Background Glow */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-blue-500/10 blur-[120px] animate-pulse"></div>
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-emerald-500/10 blur-[120px] animate-pulse"></div>
         {combo > 2 && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-white/5 blur-[80px] animate-ping"></div>
         )}
       </div>
 
       {/* Fixed Top Bar - Updated for V2 */}
-      <div className="fixed top-0 left-0 right-0 z-[500] bg-slate-900/40 backdrop-blur-xl px-4 py-3 flex justify-between items-center shadow-2xl border-b border-white/5 pointer-events-auto">
+      <div className="fixed top-0 left-0 right-0 z-[500] bg-emerald-950/40 backdrop-blur-xl px-4 py-3 flex justify-between items-center shadow-2xl border-b border-white/5 pointer-events-auto">
         <div className="flex flex-col">
           <span className="text-blue-300 text-[9px] font-black tracking-widest uppercase mb-0.5">المقام الإيماني</span>
           <div className="flex items-center gap-2">
@@ -1425,7 +1407,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md px-6"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-emerald-950/80 backdrop-blur-md px-6"
           >
             <motion.div 
               initial={{ scale: 0.8, y: 20, opacity: 0 }}
@@ -1505,7 +1487,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4"
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-emerald-950/90 backdrop-blur-xl px-4"
           >
             <motion.div 
               initial={{ y: 50, opacity: 0 }}
@@ -1568,7 +1550,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl px-4"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-emerald-950/90 backdrop-blur-xl px-4"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
