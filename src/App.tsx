@@ -22,7 +22,8 @@ const zikirData = [
   { text: "الله\nأكبر", spokenText: "اللهُ أَكْبَر", color: "#f87171", base: "#b91c1c" }, 
   { text: "سبحان الله\nوبحمده", spokenText: "سُبْحَانَ اللهِ وَبِحَمْدِهْ", color: "#c084fc", base: "#7e22ce" }, 
   { text: "سبحان ربي\nالعظيم", spokenText: "سُبْحَانَ رَبِّيَ الْعَظِيمْ", color: "#2dd4bf", base: "#0f766e" }, 
-  { text: "أستغفر الله\nوأتوب إليه", spokenText: "أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهْ", color: "#f472b6", base: "#be185d" } 
+  { text: "أستغفر الله\nوأتوب إليه", spokenText: "أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهْ", color: "#f472b6", base: "#be185d" },
+  { text: "لا حول ولا\nقوة إلا بالله", spokenText: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهْ", color: "#94a3b8", base: "#475569" }
 ];
 
 const LEVELS = [
@@ -166,13 +167,13 @@ export default function App() {
           char: flower,
           size: 14 + Math.random() * 10,
           rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() - 0.5) * 0.1,
-          drift: (Math.random() - 0.5) * 0.1
-        });
-      }
-    };
+          rotSpeed: (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.6), // Much faster rotation like a fan
+        drift: (Math.random() - 0.5) * 0.1
+      });
+    }
+  };
 
-    const updateAndDrawParticles = () => {
+  const updateAndDrawParticles = () => {
       // Update Shake
       if (shakeRef.current.intensity > 0) {
         shakeRef.current.x = (Math.random() - 0.5) * shakeRef.current.intensity;
@@ -192,9 +193,9 @@ export default function App() {
         p.x += p.vx;
         p.y += p.vy;
         p.vx += Math.sin(p.rotation) * p.drift; // Natural sway
-        p.vy += 0.25; // Light gravity for flowers
-        p.life -= 0.015; 
-        p.rotation += p.rotSpeed;
+        p.vy += 0.2; // Lighter gravity for flowers
+        p.life -= 0.012; // Longer life for better visual
+        p.rotation += p.rotSpeed * 0.8; // Apply the fast rotation speed
         
         if (p.life <= 0) {
           particlesRef.current.splice(i, 1);
