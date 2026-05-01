@@ -23,17 +23,22 @@ const zikirData = [
   { text: "سبحان الله\nوبحمده", spokenText: "سُبْحَانَ اللهِ وَبِحَمْدِهْ", color: "#c084fc", base: "#7e22ce" }, 
   { text: "سبحان ربي\nالعظيم", spokenText: "سُبْحَانَ رَبِّيَ الْعَظِيمْ", color: "#2dd4bf", base: "#0f766e" }, 
   { text: "أستغفر الله\nوأتوب إليه", spokenText: "أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهْ", color: "#f472b6", base: "#be185d" },
-  { text: "لا حول ولا\nقوة إلا بالله", spokenText: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهْ", color: "#94a3b8", base: "#475569" }
+  { text: "لا حول ولا\nقوة إلا بالله", spokenText: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهْ", color: "#94a3b8", base: "#475569" },
+  { text: "اللهم صلِ\nعلى محمد", spokenText: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّد", color: "#4ade80", base: "#166534" },
+  { text: "يا حي\nيا قيوم", spokenText: "يَا حَيُّ يَا قَيُّوم", color: "#60a5fa", base: "#1e3a8a" },
+  { text: "يا لطيف", spokenText: "يَا لَطِيف", color: "#fb7185", base: "#e11d48" },
+  { text: "حسبي الله\nونعم الوكيل", spokenText: "حَسْبِيَ اللهُ وَنِعْمَ الْوَكِيل", color: "#34d399", base: "#059669" },
+  { text: "سبحان الله\nالعظيم", spokenText: "سُبْحَانَ اللهِ الْعَظِيم", color: "#a78bfa", base: "#6d28d9" },
+  { text: "تبارك الله", spokenText: "تَبَارَكَ الله", color: "#fb923c", base: "#ea580c" }
 ];
 
 const LEVELS = [
-  { target: 50, zikirs: 4 },
-  { target: 120, zikirs: 4 },
-  { target: 200, zikirs: 4 },
-  { target: 300, zikirs: 4 },
-  { target: 450, zikirs: 5 },
-  { target: 650, zikirs: 6 },
-  { target: 900, zikirs: 7 }
+  { target: 2000, zikirs: 8 },
+  { target: 5000, zikirs: 9 },
+  { target: 10000, zikirs: 10 },
+  { target: 20000, zikirs: 12 },
+  { target: 40000, zikirs: 14 },
+  { target: 100000, zikirs: 14 }
 ];
 
 export default function App() {
@@ -55,12 +60,17 @@ export default function App() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [isVictory, setIsVictory] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [bgColor, setBgColor] = useState("#0f172a"); // Default deep blue
+  
+  const titles = ["ذاكر", "مسبّح", "قانت", "منيب", "مخبت", "صديق"];
+  const currentTitle = titles[Math.min(level - 1, titles.length - 1)];
 
   const [combo, setCombo] = useState(0);
   const [comboMessage, setComboMessage] = useState("");
   const comboRef = useRef(0);
 
   const [floatingWords, setFloatingWords] = useState<Array<{id: string, text: string, x: number, y: number, drift: number, type?: 'score' | 'combo'}>>([]);
+  const [noMoves, setNoMoves] = useState(false);
   const scoreRef = useRef(0);
   const boardRef = useRef<any[][]>([]);
   const particlesRef = useRef<any[]>([]);
@@ -94,9 +104,12 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    // Preload audio files
-    (zikirData as any[]).forEach(item => {
+    useEffect(() => {
+      // Robust board versioning to prevent race conditions
+      const currentVersion = boardVersionRef.current;
+      
+      // Preload audio files
+      zikirData.forEach(item => {
       if (item.soundPath) {
         const audio = new Audio(item.soundPath);
         audioCacheRef.current[item.text] = audio;
@@ -142,9 +155,61 @@ export default function App() {
       shakeRef.current.intensity = 0;
     };
 
-    const createParticles = (x: number, y: number, color: string) => {
+    // V2: Audio Context for procedural "Marble Clink" sounds
+    const playMatchSound = (isSuper: boolean) => {
+      try {
+        const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) return;
+        
+        const ctx = new AudioContextClass();
+        const now = ctx.currentTime;
+        
+        // Simulating the "Click" of marble stones
+        const playClink = (time: number, freq: number, vol: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          
+          // Marble hits have high-frequency transients and clean tones
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, time);
+          // Very fast frequency drop to mimic solid impact
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.8, time + 0.05);
+          
+          gain.gain.setValueAtTime(0, time);
+          gain.gain.linearRampToValueAtTime(vol, time + 0.002);
+          // Sharp decay for marble hardness
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start(time);
+          osc.stop(time + 0.06);
+        };
+
+        // Main marble impact (Higher pitch than before) - Volume doubled
+        playClink(now, 1200 + Math.random() * 200, 0.16); 
+        
+        // Second subtle resonance for realism - Volume doubled
+        if (isSuper) {
+          playClink(now + 0.02, 2400, 0.08);
+          playClink(now + 0.04, 1800, 0.06);
+        } else {
+          playClink(now + 0.015, 1500, 0.04);
+        }
+        
+        setTimeout(() => ctx.close(), 250);
+      } catch (e) {
+        console.error("Audio error", e);
+      }
+    };
+
+    const createParticles = (x: number, y: number, color: string, isSuper = false) => {
+      // Play stone clink sound
+      playMatchSound(isSuper);
+
       // Balanced density for beauty and performance
-      const count = 12; 
+      const count = isSuper ? 25 : 12; 
       
       // Precise color detection for variety
       let flowers = ["🌸"]; 
@@ -158,7 +223,7 @@ export default function App() {
       for(let i = 0; i < count; i++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
         const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (2 + Math.random() * 5) * 2; 
+        const speed = (2 + Math.random() * 5) * 6; 
         particlesRef.current.push({
           x: x, y: y,
           vx: Math.cos(angle) * speed,
@@ -216,6 +281,19 @@ export default function App() {
     };
 
     const drawTile = (ctx: CanvasRenderingContext2D, tile: any, x: number, y: number, isSelected: boolean) => {
+        // Draw special glow for special tiles
+        if (tile.isSpecial) {
+           ctx.save();
+           ctx.shadowColor = tile.isSpecial === 'super' ? "rgba(255, 255, 255, 0.9)" : tile.color;
+           ctx.shadowBlur = 20 + Math.sin(Date.now() / 200) * 10;
+           ctx.beginPath();
+           ctx.roundRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4, 25);
+           ctx.strokeStyle = "white";
+           ctx.lineWidth = 3;
+           ctx.stroke();
+           ctx.restore();
+        }
+
         // Draw tile body with frosted theme radial gradient
         const rg = ctx.createRadialGradient(
           x + TILE_SIZE * 0.3, y + TILE_SIZE * 0.3, 0,
@@ -267,8 +345,16 @@ export default function App() {
 
         // Text
         ctx.fillStyle = "white";
-        ctx.font = "bold 16px 'Reem Kufi', sans-serif"; 
+        ctx.font = tile.isSpecial ? "bold 18px 'Reem Kufi', sans-serif" : "bold 16px 'Reem Kufi', sans-serif"; 
         ctx.textAlign = "center";
+        
+        // Add special icon for special tiles
+        if (tile.isSpecial) {
+            ctx.font = "bold 24px Arial";
+            ctx.fillText(tile.isSpecial === 'super' ? "✨" : (tile.isSpecial === 'row' ? "↔️" : "↕️"), x + TILE_SIZE / 2, y + TILE_SIZE / 2 - 25);
+            ctx.font = "bold 16px 'Reem Kufi', sans-serif";
+        }
+
         const lines = tile.text.split('\n');
         lines.forEach((line: string, i: number) => {
           ctx.shadowColor = "rgba(0,0,0,0.4)";
@@ -468,9 +554,8 @@ export default function App() {
                   const executionTime = time - startTime;
                   const progress = Math.min(executionTime / duration, 1);
                   
-                  // easeInQuad
-                  const ease = progress * progress;
-                  const currentY = -distance + (distance * ease);
+                  // Linear movement (no bounce, no easing)
+                  const currentY = -distance + (distance * progress);
                   
                   if (progress >= 1) {
                     tile.offsetY = 0;
@@ -507,9 +592,8 @@ export default function App() {
               const executionTime = time - startTime;
               const progress = Math.min(executionTime / duration, 1);
               
-              // easeInQuad
-              const ease = progress * progress;
-              const currentY = -distance + (distance * ease);
+              // Linear movement
+              const currentY = -distance + (distance * progress);
               
               if (progress >= 1) {
                 tile.offsetY = 0;
@@ -525,9 +609,17 @@ export default function App() {
       }
       
       if (isFalling) {
-        playSound('pop');
         Promise.all(animations).then(() => {
-          setTimeout(() => { if (boardVersionRef.current === currentVersion) checkMatches(true) }, 50);
+          setTimeout(() => { 
+            if (boardVersionRef.current === currentVersion) {
+              const matched = checkMatches(true);
+              if (!matched) {
+                if (!findPossibleMoves()) {
+                  setNoMoves(true);
+                }
+              }
+            } 
+          }, 50);
         }).catch(() => {
           isAnimatingRef.current = false;
         });
@@ -561,16 +653,55 @@ export default function App() {
     const processMatches = (matches: Set<string>, shouldSpeak = true, onComplete?: () => void) => {
       let iterator = matches.values();
       let firstMatchKey = iterator.next().value.split(',');
-      let matchColor = boardRef.current[parseInt(firstMatchKey[0])][parseInt(firstMatchKey[1])].color;
-      let matchedTile = boardRef.current[parseInt(firstMatchKey[0])][parseInt(firstMatchKey[1])];
+      let r0 = parseInt(firstMatchKey[0]);
+      let c0 = parseInt(firstMatchKey[1]);
+      let matchedTile = boardRef.current[r0][c0];
+      let matchColor = matchedTile.color;
       
+      // V2: Check for special tile activation
+      let specialToTrigger: any[] = [];
+      matches.forEach(key => {
+          const [r, c] = key.split(',').map(Number);
+          if (boardRef.current[r][c]?.isSpecial) {
+              specialToTrigger.push(boardRef.current[r][c]);
+          }
+      });
+
+      if (specialToTrigger.length > 0) {
+          specialToTrigger.forEach(s => {
+              if (s.isSpecial === 'row') {
+                  for(let c=0; c<COLS; c++) matches.add(`${s.r},${c}`);
+              } else if (s.isSpecial === 'col') {
+                  for(let r=0; r<ROWS; r++) matches.add(`${r},${s.c}`);
+              } else if (s.isSpecial === 'super') {
+                  boardRef.current.forEach((row, ri) => row.forEach((t, ci) => {
+                      if (t && t.text === s.text) matches.add(`${ri},${ci}`);
+                  }));
+              }
+          });
+      }
+
+      // V2: Create new special tiles if match is big enough
+      let specialPos: {r: number, c: number} | null = null;
+      if (matches.size === 4) {
+          // Find if it was horizontal or vertical
+          const keys = Array.from(matches).map(k => k.split(',').map(Number));
+          const isHorizontal = keys.every(k => k[0] === keys[0][0]);
+          specialPos = { r: keys[0][0], c: keys[0][1] };
+          var type: 'row'|'col' = isHorizontal ? 'row' : 'col';
+      } else if (matches.size >= 5) {
+          const keys = Array.from(matches).map(k => k.split(',').map(Number));
+          specialPos = { r: keys[0][0], c: keys[0][1] };
+          var typeSuper: 'super' = 'super';
+      }
+
       cascadeCountRef.current += 1;
 
       let speechCalled = false;
       if (shouldSpeak) {
          playSound('match');
-         vibrate([20, 30, 20]);
-         triggerShake(8 + (matches.size * 2)); // Stronger shake for more matches
+         vibrate(20);
+         // triggerShake removed 
          
          let spoken = matchedTile.spokenText;
 
@@ -591,7 +722,10 @@ export default function App() {
         let r = parseInt(rStr);
         let c = parseInt(cStr);
         if (shouldSpeak) {
-          createParticles(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, matchColor);
+          // V2: More particles for bigger matches or special tiles
+          const isBigExplosion = matches.size > 5 || specialToTrigger.length > 0;
+          createParticles(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, matchColor, isBigExplosion);
+          
           if (boardRef.current[r][c] && canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
             // Calculate screen coordinates
@@ -608,13 +742,28 @@ export default function App() {
             setFloatingWords(prev => [...prev, { id, text, x: screenX, y: screenY, drift }]);
             setTimeout(() => {
               setFloatingWords(prev => prev.filter(w => w.id !== id));
-            }, 12500); // Sink with 12s duration
+            }, 8500); // Sink with 8.5s duration (matching animation)
           }
         }
         boardRef.current[r][c] = null;
       });
+
+      // V2: Place the special tile after clearing
+      if (specialPos && matchedTile) {
+          const {r, c} = specialPos;
+          boardRef.current[r][c] = { 
+            ...matchedTile, 
+            r, c, 
+            isSpecial: type || typeSuper,
+            offsetX: 0, offsetY: 0 
+          };
+      }
       
       if (shouldSpeak) {
+        // V2: Update Background Color based on match
+        setBgColor(matchColor + "44"); // Add transparency
+        setTimeout(() => setBgColor("#0f172a"), 800);
+
         // Update Combo
         comboRef.current += 1;
         setCombo(comboRef.current);
@@ -661,21 +810,93 @@ export default function App() {
       }
     };
 
-    const checkMatches = (shouldSpeak = true) => {
+    const hasMatchesOnBoard = () => {
+      return getMatches().size > 0;
+    };
+
+    const findPossibleMoves = () => {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          // Try horizontal swap
+          if (c < COLS - 1) {
+            const temp = boardRef.current[r][c];
+            boardRef.current[r][c] = boardRef.current[r][c + 1];
+            boardRef.current[r][c + 1] = temp;
+            
+            const hasMatch = hasMatchesOnBoard();
+            
+            boardRef.current[r][c + 1] = boardRef.current[r][c];
+            boardRef.current[r][c] = temp;
+            
+            if (hasMatch) return true;
+          }
+          // Try vertical swap
+          if (r < ROWS - 1) {
+            const temp = boardRef.current[r][c];
+            boardRef.current[r][c] = boardRef.current[r + 1][c];
+            boardRef.current[r + 1][c] = temp;
+            
+            const hasMatch = hasMatchesOnBoard();
+            
+            boardRef.current[r + 1][c] = boardRef.current[r][c];
+            boardRef.current[r][c] = temp;
+            
+            if (hasMatch) return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    const shuffleBoard = () => {
+      isAnimatingRef.current = true;
+      setNoMoves(false);
+      
+      vibrate(50);
+      
+      const currData = getCurrZikirData();
+      const shuffleContent = () => {
+        const flat = boardRef.current.flat();
+        for (let i = flat.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [flat[i], flat[j]] = [flat[j], flat[i]];
+        }
+        
+        let idx = 0;
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            boardRef.current[r][c] = { ...flat[idx++], r, c, offsetX: 0, offsetY: 0 };
+          }
+        }
+      };
+
+      let safe = 0;
+      shuffleContent();
+      while ((hasMatchesOnBoard() || !findPossibleMoves()) && safe < 20) {
+        shuffleContent();
+        safe++;
+      }
+      
+      boardVersionRef.current++;
+      isAnimatingRef.current = false;
+    };
+
+    const checkMatches = (shouldSpeak = true): boolean => {
       const currentVersion = boardVersionRef.current;
       const matches = getMatches();
       if (matches.size > 0) {
         processMatches(matches, shouldSpeak, () => {
           if (boardVersionRef.current === currentVersion) applyGravity();
         });
+        return true;
       } else {
-        // End of cascade
         if (shouldSpeak) {
           comboRef.current = 0;
           setCombo(0);
           setComboMessage("");
         }
         isAnimatingRef.current = false;
+        return false;
       }
     };
 
@@ -736,8 +957,20 @@ export default function App() {
     const getScaledCoords = (e: MouseEvent | TouchEvent) => {
       const rect = canvas.getBoundingClientRect();
       const isTouch = 'touches' in e;
-      const clientX = isTouch ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
-      const clientY = isTouch ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
+      
+      let clientX, clientY;
+      if (isTouch) {
+        const touchEvent = e as TouchEvent;
+        // Search in touches, then changedTouches for touchend events
+        const touch = touchEvent.touches[0] || touchEvent.changedTouches[0];
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        const mouseEvent = e as MouseEvent;
+        clientX = mouseEvent.clientX;
+        clientY = mouseEvent.clientY;
+      }
+
       const scaleX = canvas.width / (dpr * rect.width);
       const scaleY = canvas.height / (dpr * rect.height);
       const x = (clientX - rect.left) * scaleX;
@@ -746,13 +979,13 @@ export default function App() {
     };
 
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      // Prevent scrolling while playing
       if (e.cancelable) e.preventDefault();
       if (isAnimatingRef.current) return;
       
       resetIdleTimer();
-      cascadeCountRef.current = 0; // Reset cascade on new user action
-      dragDirectionRef.current = null; // Reset drag direction
-      vibrate(10); // Light haptic on touch start
+      cascadeCountRef.current = 0; 
+      dragDirectionRef.current = null;
       
       const { x, y } = getScaledCoords(e);
       const c = Math.floor(x / TILE_SIZE);
@@ -760,6 +993,7 @@ export default function App() {
       
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
 
+      vibrate(12); // Slightly firmer haptic for better tactile feedback
       dragStartRef.current = { r, c, x, y };
       
       if (firstTileRef.current) {
@@ -787,26 +1021,24 @@ export default function App() {
       if (e.cancelable) e.preventDefault();
       if (isAnimatingRef.current || !dragStartRef.current || !firstTileRef.current) return;
       
-      resetIdleTimer();
-      
       const { x, y } = getScaledCoords(e);
       const dx = x - dragStartRef.current.x;
       const dy = y - dragStartRef.current.y;
       
       const { r, c } = firstTileRef.current;
-      const tile = boardRef.current[r][c];
+      const tile = boardRef.current[r]?.[c];
 
       if (!tile) {
         dragStartRef.current = null;
         return;
       }
 
-      // FREE MOVEMENT: Tile follows finger exactly
-      tile.offsetX = dx;
-      tile.offsetY = dy;
+      // Responsive dragging - visual feedback
+      tile.offsetX = dx * 0.8; // Added slight dampening for natural feel
+      tile.offsetY = dy * 0.8;
 
       const moveDist = Math.max(Math.abs(dx), Math.abs(dy));
-      const SWIPE_THRESHOLD = TILE_SIZE * 0.45; 
+      const SWIPE_THRESHOLD = TILE_SIZE * 0.4; // Slightly lower threshold for faster response
 
       if (moveDist > SWIPE_THRESHOLD) {
         const isX = Math.abs(dx) > Math.abs(dy);
@@ -841,13 +1073,19 @@ export default function App() {
     };
 
     const handlePointerUp = (e: MouseEvent | TouchEvent) => {
-      if (dragStartRef.current && firstTileRef.current) {
+      // Ensure visual reset even on missed state
+      if (!dragStartRef.current) {
+        boardRef.current.forEach(row => row?.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
+        return;
+      }
+
+      if (firstTileRef.current) {
          const { r, c } = firstTileRef.current;
-         const tile = boardRef.current[r][c];
+         const tile = boardRef.current[r]?.[c];
          
          if (tile && (tile.offsetX !== 0 || tile.offsetY !== 0)) {
              // RUBBER BAND EFFECT: Animate back to zero
-             const duration = 150; // Quicker return
+             const duration = 120; // 20% faster return
              const startTime = performance.now();
              const startX = tile.offsetX;
              const startY = tile.offsetY;
@@ -855,7 +1093,7 @@ export default function App() {
              const returnAnim = (time: number) => {
                  const elapsed = time - startTime;
                  const progress = Math.min(1, elapsed / duration);
-                 const ease = 1 - Math.pow(1 - progress, 3); // Cubic ease out
+                 const ease = progress * (2 - progress); // easeOutQuad
                  
                  if (progress < 1) {
                      tile.offsetX = startX * (1 - ease);
@@ -864,7 +1102,7 @@ export default function App() {
                  } else {
                      tile.offsetX = 0;
                      tile.offsetY = 0;
-                     boardRef.current.forEach(row => row.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
+                     boardRef.current.forEach(row => row?.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
                  }
              };
              requestAnimationFrame(returnAnim);
@@ -914,6 +1152,9 @@ export default function App() {
       handleDirectionAction
     };
 
+    // Expose shuffle to button via window (quickest way for this architecture)
+    (window as any).triggerShuffle = shuffleBoard;
+
     initBoard();
     render();
 
@@ -927,27 +1168,46 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      canvas.removeEventListener('mousedown', handlePointerDown as EventListener);
-      canvas.removeEventListener('mousemove', handlePointerMove as EventListener);
-      window.removeEventListener('mouseup', handlePointerUp as EventListener);
-      canvas.removeEventListener('touchstart', handlePointerDown as EventListener);
-      canvas.removeEventListener('touchmove', handlePointerMove as EventListener);
-      window.removeEventListener('touchend', handlePointerUp as EventListener);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.speechSynthesis?.cancel();
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    };
-  }, []);
+        cancelAnimationFrame(animationFrameId);
+        canvas.removeEventListener('mousedown', handlePointerDown as EventListener);
+        canvas.removeEventListener('mousemove', handlePointerMove as EventListener);
+        window.removeEventListener('mouseup', handlePointerUp as EventListener);
+        canvas.removeEventListener('touchstart', handlePointerDown as EventListener);
+        canvas.removeEventListener('touchmove', handlePointerMove as EventListener);
+        window.removeEventListener('touchend', handlePointerUp as EventListener);
+        window.removeEventListener('keydown', handleKeyDown);
+        window.speechSynthesis?.cancel();
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      };
+    }, []); // Keep empty to run once, initBoard handles complexity
 
   const progressPercentage = Math.min((score / targetScore) * 100, 100);
 
   return (
-    <div className="flex flex-col items-center min-h-screen relative font-sans">
-      <div className="mesh-bg"></div>
+    <div className="flex flex-col items-center min-h-screen relative font-sans overflow-hidden select-none touch-none"
+         style={{ 
+           background: `radial-gradient(circle at center, ${bgColor} 0%, #020617 100%)`,
+           transition: 'background 0.8s ease'
+         }}>
       
-      {/* Fixed Top Bar */}
-      <div className="fixed top-0 left-0 right-0 z-[500] bg-slate-900/95 backdrop-blur-xl px-4 py-3 flex justify-between items-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b border-white/10 pointer-events-auto">
+      {/* V2: Animated Spiritual Background Glow */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-blue-500/10 blur-[120px] animate-pulse"></div>
+        {combo > 2 && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-white/5 blur-[80px] animate-ping"></div>
+        )}
+      </div>
+
+      {/* Fixed Top Bar - Updated for V2 */}
+      <div className="fixed top-0 left-0 right-0 z-[500] bg-slate-900/40 backdrop-blur-xl px-4 py-3 flex justify-between items-center shadow-2xl border-b border-white/5 pointer-events-auto">
+        <div className="flex flex-col">
+          <span className="text-blue-300 text-[9px] font-black tracking-widest uppercase mb-0.5">المقام الإيماني</span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black text-white drop-shadow-lg">{currentTitle}</h1>
+            <span className="px-1.5 py-0.5 bg-blue-500/30 rounded text-[8px] text-blue-100 font-bold uppercase">V2</span>
+          </div>
+        </div>
+
         <div className="flex gap-2">
           {(['easy', 'medium', 'hard'] as const).map(d => (
             <motion.button
@@ -1021,14 +1281,14 @@ export default function App() {
             key={w.id} 
             initial={{ opacity: 0, y: 10, scale: 1, x: "-50%" }}
             animate={{ 
-              opacity: [0, 1, 1, 1, 0],
-              y: -window.innerHeight - 200,
+              opacity: [0, 1, 1, 0.8, 0],
+              y: -window.innerHeight - 100,
               x: `calc(-50% + ${w.drift}px)`
             }}
             transition={{ 
-              y: { duration: 12, ease: "easeOut" },
-              x: { duration: 12, ease: "easeIn" }, // Spread increases more as it goes higher
-              opacity: { duration: 12, times: [0, 0.05, 0.85, 0.95, 1] },
+              y: { duration: 8, ease: "linear" }, // Slightly faster floating
+              x: { duration: 8, ease: "easeOut" },
+              opacity: { duration: 8, times: [0, 0.1, 0.7, 0.9, 1] },
               scale: { duration: 0 }
             }}
             className={`fixed pointer-events-none font-black text-center z-[200] ${w.type === 'combo' ? 'text-amber-400 drop-shadow-[0_4px_15px_rgba(251,191,36,0.8)]' : 'text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]'}`}
@@ -1094,9 +1354,29 @@ export default function App() {
           <div className="glass rounded-[56px] p-5 flex justify-center items-center shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] border border-white/10 relative w-fit">
             <canvas 
               ref={canvasRef} 
-              className="rounded-[36px] cursor-pointer relative z-10"
+              onContextMenu={(e) => e.preventDefault()}
+              className="rounded-[36px] cursor-pointer relative z-10 touch-none select-none"
               style={{ maxWidth: '100%', maxHeight: '75vh', width: 'auto', height: 'auto', objectFit: 'contain' }}
             />
+            
+            {/* Help Button (No Moves Only) */}
+            <AnimatePresence>
+              {noMoves && (
+                <motion.button
+                  id="help-button"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => (window as any).triggerShuffle?.()}
+                  className="absolute z-50 bg-amber-500 text-white font-bold px-8 py-4 rounded-full shadow-2xl border-4 border-white/30 flex flex-col items-center gap-1 active:bg-amber-600 transition-colors"
+                >
+                  <span className="text-xl">مساعدة</span>
+                  <span className="text-xs opacity-90">لا توجد حركات ممكنة</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
