@@ -84,6 +84,8 @@ export default function App() {
   const cascadeCountRef = useRef(0);
   const idleTimerRef = useRef<any>(null);
   const dragDirectionRef = useRef<'x' | 'y' | null>(null);
+  const lastInteractionTimeRef = useRef(Date.now());
+  const hintMoveRef = useRef<{r1: number, c1: number, r2: number, c2: number} | false>(false);
 
   const gameActionsRef = useRef<{ initBoard: () => void, handleDirectionAction?: (dir: 'up' | 'down' | 'left' | 'right') => void } | null>(null);
 
@@ -407,6 +409,35 @@ export default function App() {
         ctx.restore();
       });
       
+      // Hint rendering
+      const now = Date.now();
+      const needsHint = !isAnimatingRef.current && draggedTiles.length === 0 && (now - lastInteractionTimeRef.current > 5000) && !showLevelUp && !isVictory;
+      if (needsHint) {
+        if (!hintMoveRef.current) {
+          hintMoveRef.current = findPossibleMoves();
+        }
+        if (hintMoveRef.current) {
+          const { r1, c1, r2, c2 } = hintMoveRef.current;
+          const throb = (Math.sin(now / 150) + 1) / 2;
+          const alpha = 0.15 + throb * 0.4;
+          
+          [ {r: r1, c: c1}, {r: r2, c: c2} ].forEach(pos => {
+             const tile = boardRef.current[pos.r][pos.c];
+             if (tile) {
+                 ctx.save();
+                 ctx.globalCompositeOperation = "screen";
+                 ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                 ctx.beginPath();
+                 ctx.roundRect(pos.c * TILE_SIZE + 4, pos.r * TILE_SIZE + 4, TILE_SIZE - 8, TILE_SIZE - 8, 12);
+                 ctx.fill();
+                 ctx.restore();
+             }
+          });
+        }
+      } else {
+        hintMoveRef.current = false;
+      }
+
       updateAndDrawParticles();
       
       animationFrameId = requestAnimationFrame(render);
@@ -789,7 +820,7 @@ export default function App() {
       return getMatches().size > 0;
     };
 
-    const findPossibleMoves = () => {
+    const findPossibleMoves = (): {r1: number, c1: number, r2: number, c2: number} | false => {
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           // Try horizontal swap
@@ -803,7 +834,7 @@ export default function App() {
             boardRef.current[r][c + 1] = boardRef.current[r][c];
             boardRef.current[r][c] = temp;
             
-            if (hasMatch) return true;
+            if (hasMatch) return { r1: r, c1: c, r2: r, c2: c + 1 };
           }
           // Try vertical swap
           if (r < ROWS - 1) {
@@ -816,7 +847,7 @@ export default function App() {
             boardRef.current[r + 1][c] = boardRef.current[r][c];
             boardRef.current[r][c] = temp;
             
-            if (hasMatch) return true;
+            if (hasMatch) return { r1: r, c1: c, r2: r + 1, c2: c };
           }
         }
       }
@@ -958,6 +989,9 @@ export default function App() {
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       if (e.cancelable) e.preventDefault();
       
+      lastInteractionTimeRef.current = Date.now();
+      hintMoveRef.current = false;
+      
       cachedRect = canvas.getBoundingClientRect(); // Cache rect once on down
       const { x, y } = getScaledCoords(e, true);
       const c = Math.floor(x / TILE_SIZE);
@@ -1050,6 +1084,8 @@ export default function App() {
     };
 
     const handlePointerUp = (e: MouseEvent | TouchEvent) => {
+      lastInteractionTimeRef.current = Date.now();
+      hintMoveRef.current = false;
       // Ensure visual reset even on missed state
       if (!dragStartRef.current) {
         boardRef.current.forEach(row => row?.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
