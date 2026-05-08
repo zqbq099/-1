@@ -519,7 +519,7 @@ export default function App() {
       const tile1 = boardRef.current[r1]?.[c1];
       const tile2 = boardRef.current[r2]?.[c2];
       
-      const duration = 80; // Ultra fast swap
+      const duration = 120; // Slightly more perceptible but very snappy
       const startTime = performance.now();
       const dx = (c2 - c1) * TILE_SIZE;
       const dy = (r2 - r1) * TILE_SIZE;
@@ -558,109 +558,88 @@ export default function App() {
     const applyGravity = () => {
       const currentVersion = boardVersionRef.current;
       let isFalling = false;
-      const animations: Promise<void>[] = [];
       const currData = getCurrZikirData();
-      const GRAVITY = 24.0; // Extremely fast gravity
       
+      // Phase 1: Solidify current board state logic (where things will end up)
       for (let c = 0; c < COLS; c++) {
         let emptySpot = ROWS - 1;
-        let columnMissingCount = 0;
-
-        // تحريك القطع الموجودة التي تحتها فراغ
         for (let r = ROWS - 1; r >= 0; r--) {
           if (boardRef.current[r][c]) {
             let tile = boardRef.current[r][c];
             if (r !== emptySpot) {
-              isFalling = true;
               const startR = r;
               const targetR = emptySpot;
               
               boardRef.current[r][c] = null;
               boardRef.current[targetR][c] = tile;
               tile.r = targetR;
-
-              animations.push(new Promise(resolve => {
-                const distance = (targetR - startR) * TILE_SIZE;
-                const duration = (80 + (targetR - startR) * 15) / 3; // 3x faster
-                let startTime: number | null = null;
-                
-                const anim = (time: number) => {
-                  if (!startTime) startTime = time;
-                  const executionTime = time - startTime;
-                  const progress = Math.min(executionTime / duration, 1);
-                  
-                  // Linear movement (no bounce, no easing)
-                  const currentY = -distance + (distance * progress);
-                  
-                  if (progress >= 1) {
-                    tile.offsetY = 0;
-                    resolve();
-                  } else {
-                    tile.offsetY = currentY;
-                    requestAnimationFrame(anim);
-                  }
-                };
-                requestAnimationFrame(anim);
-              }));
+              
+              // Set initial visual offset
+              tile.offsetY = (startR - targetR) * TILE_SIZE;
+              isFalling = true;
             }
             emptySpot--;
-          } else {
-            columnMissingCount++;
           }
         }
 
-        // تعبئة المربعات الفارغة بقطع جديدة تسقط من الأعلى
+        // Phase 2: Create new tiles falling from top
+        let spawnY = -TILE_SIZE;
         for (let r = emptySpot; r >= 0; r--) {
-          isFalling = true;
           const zikir = currData[Math.floor(Math.random() * currData.length)];
           const tile = { ...zikir, r, c, offsetX: 0, offsetY: 0 };
           boardRef.current[r][c] = tile;
           
-          animations.push(new Promise(resolve => {
-            const distance = (r + columnMissingCount + 3) * TILE_SIZE;
-            const duration = (100 + (r + columnMissingCount) * 15) / 3;
-            const delay = ((emptySpot - r) * 30) / 3; // 3x faster stagger
-            let startTime: number | null = null;
-            
-            const anim = (time: number) => {
-              if (!startTime) startTime = time;
-              const executionTime = time - startTime;
-              const progress = Math.min(executionTime / duration, 1);
-              
-              // Linear movement
-              const currentY = -distance + (distance * progress);
-              
-              if (progress >= 1) {
-                tile.offsetY = 0;
-                resolve();
-              } else {
-                tile.offsetY = currentY;
-                requestAnimationFrame(anim);
-              }
-            };
-            setTimeout(() => requestAnimationFrame(anim), delay);
-          }));
+          // Position them above visually
+          tile.offsetY = (-(emptySpot - r + 1) - 2) * TILE_SIZE;
+          isFalling = true;
+          spawnY -= TILE_SIZE;
         }
       }
-      
-      if (isFalling) {
-        Promise.all(animations).then(() => {
-          setTimeout(() => { 
-            if (boardVersionRef.current === currentVersion) {
-              const matched = checkMatches(true);
-              if (!matched) {
-                if (!findPossibleMoves()) {
-                  setNoMoves(true);
-                }
-              }
-            } 
-          }, 50);
-        }).catch(() => {
-          isAnimatingRef.current = false;
-        });
-      } else {
+
+      if (!isFalling) {
         setTimeout(() => { if (boardVersionRef.current === currentVersion) checkMatches(true) }, 50);
+        return;
       }
+
+      // Phase 3: Unified animation loop for ALL tiles
+      const startTime = performance.now();
+      const dropDuration = 250; // Faster but smoother drop
+
+      // Store initial offsets to interpolate from them correctly
+      const initialOffsets = boardRef.current.map(row => row.map(tile => tile?.offsetY || 0));
+
+      const anim = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / dropDuration, 1);
+        
+        // Cubic ease-out for a natural "landing" feel
+        const ease = 1 - Math.pow(1 - progress, 3);
+        
+        let allDone = true;
+        boardRef.current.forEach((row, ri) => row.forEach((tile, ci) => {
+          if (tile && initialOffsets[ri][ci] !== 0) {
+            if (progress < 1) {
+              tile.offsetY = initialOffsets[ri][ci] * (1 - ease);
+              allDone = false;
+            } else {
+              tile.offsetY = 0;
+            }
+          }
+        }));
+
+        if (!allDone && progress < 1) {
+          requestAnimationFrame(anim);
+        } else {
+          boardRef.current.forEach(row => row.forEach(tile => { if (tile) tile.offsetY = 0; }));
+          // Immediate check for next match to keep the flow
+          if (boardVersionRef.current === currentVersion) {
+            const matched = checkMatches(true);
+            if (!matched && !findPossibleMoves()) setNoMoves(true);
+          }
+        }
+      };
+      
+      requestAnimationFrame(anim);
     };
 
     const getMatches = () => {
@@ -749,7 +728,10 @@ export default function App() {
             speak({ text: matchedTile.text, spokenText: spoken });
          }
          
-         if (onComplete) setTimeout(onComplete, 150);
+         if (onComplete) {
+           const delay = difficultyRef.current === 'hard' ? 40 : 70;
+           setTimeout(onComplete, delay);
+         }
          speechCalled = true;
 
          setBgColor(matchColor + "44");
@@ -990,8 +972,8 @@ export default function App() {
 
       const scaleX = canvas.width / (dpr * rect.width);
       const scaleY = canvas.height / (dpr * rect.height);
-      const x = (clientX - rect.left) * scaleX;
-      const y = (clientY - rect.top) * scaleY;
+      const x = Math.max(0, Math.min(COLS * TILE_SIZE - 1, (clientX - rect.left) * scaleX));
+      const y = Math.max(0, Math.min(ROWS * TILE_SIZE - 1, (clientY - rect.top) * scaleY));
       return { x, y };
     };
 
@@ -1061,12 +1043,12 @@ export default function App() {
       if (dragDirectionRef.current === 'x') dy = 0;
       else if (dragDirectionRef.current === 'y') dx = 0;
       
-      // 1:1 MOVEMENT: Tile follows finger exactly for maximum responsiveness
+      // 1:1 MOVEMENT: Tile follows finger exactly
       tile.offsetX = dx;
       tile.offsetY = dy;
 
       const moveDist = Math.max(Math.abs(dx), Math.abs(dy));
-      const SWIPE_THRESHOLD = TILE_SIZE * 0.20; // Lowered to 0.20 (approx 12-14px) for ultra snappy response
+      const SWIPE_THRESHOLD = TILE_SIZE * 0.15; // Even more sensitive
 
       if (moveDist > SWIPE_THRESHOLD) {
         const isX = Math.abs(dx) > Math.abs(dy);
@@ -1215,10 +1197,11 @@ export default function App() {
   const progressPercentage = Math.min((score / targetScore) * 100, 100);
 
   return (
-    <div className="flex flex-col items-center min-h-screen relative font-sans overflow-hidden select-none touch-none"
+    <div className="flex flex-col items-center min-h-screen relative font-sans overflow-hidden select-none touch-none overscroll-none"
          style={{ 
            background: `radial-gradient(circle at center, ${bgColor} 0%, #020617 100%)`,
-           transition: 'background 0.8s ease-in-out'
+           transition: 'background 0.8s ease-in-out',
+           overscrollBehavior: 'none'
          }}>
       
       {/* Nature Theme Background Layers */}
@@ -1387,11 +1370,11 @@ export default function App() {
         <div className="relative group w-full flex justify-center">
           <div className="absolute -inset-4 bg-gradient-to-r from-amber-500/10 to-purple-500/10 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-500 rounded-[60px] pointer-events-none" />
           
-          <div className="glass rounded-[56px] p-5 flex justify-center items-center shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] border border-white/10 relative w-fit">
+          <div className="glass rounded-[56px] p-5 flex justify-center items-center shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] border border-white/10 relative w-fit z-[100] touch-none select-none">
             <canvas 
               ref={canvasRef} 
               onContextMenu={(e) => e.preventDefault()}
-              className="rounded-[36px] cursor-pointer relative z-10 touch-none select-none"
+              className="rounded-[36px] cursor-pointer relative z-[110] touch-none select-none"
               style={{ maxWidth: '100%', maxHeight: '75vh', width: 'auto', height: 'auto', objectFit: 'contain' }}
             />
             
