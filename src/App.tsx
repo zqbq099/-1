@@ -209,8 +209,8 @@ export default function App() {
       // Play stone clink sound
       playMatchSound(isSuper);
 
-      // Balanced density for beauty and performance
-      const count = isSuper ? 12 : 6; 
+      // Balanced density for beauty and performance (fewer than before)
+      const count = isSuper ? 6 : 3; 
       
       // Precise color detection for variety
       let flowers = ["🌸"]; 
@@ -224,7 +224,8 @@ export default function App() {
       for(let i = 0; i < count; i++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
         const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (2 + Math.random() * 5) * 24; 
+        const speed = (2 + Math.random() * 5) * 20; 
+        
         particlesRef.current.push({
           x: x, y: y,
           vx: Math.cos(angle) * speed,
@@ -233,8 +234,8 @@ export default function App() {
           char: flower,
           size: 14 + Math.random() * 10,
           rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.6), // Much faster rotation like a fan
-        drift: (Math.random() - 0.5) * 0.1
+          rotSpeed: (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.4),
+          drift: (Math.random() - 0.5) * 0.2
       });
     }
   };
@@ -251,17 +252,17 @@ export default function App() {
         shakeRef.current.y = 0;
       }
 
-      // Draw Flower Petals / Flowers
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+
       for (let i = particlesRef.current.length - 1; i >= 0; i--) {
         let p = particlesRef.current[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.vx += Math.sin(p.rotation) * p.drift; // Natural sway
-        p.vy += 0.8; // Slightly stronger gravity for faster motion
-        p.life -= 0.048; // Faster decay since they move faster
-        p.rotation += p.rotSpeed * 3.2; // Double rotation speed for energy
+        p.vx += Math.sin(p.rotation) * p.drift; 
+        p.vy += 0.9; // Gravity for jewels
+        p.life -= 0.035; // Slower fade for smooth effect
+        p.rotation += p.rotSpeed; 
         
         if (p.life <= 0) {
           particlesRef.current.splice(i, 1);
@@ -269,11 +270,10 @@ export default function App() {
         }
         
         ctx.save();
-        ctx.globalAlpha = p.life > 0.4 ? 1.0 : p.life / 0.4;
+        ctx.globalAlpha = p.life > 0.3 ? 1.0 : p.life / 0.3;
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         
-        // Draw the flower emoji character
         ctx.font = `${p.size}px Arial`;
         ctx.fillText(p.char, 0, 0);
         
@@ -282,100 +282,128 @@ export default function App() {
     };
 
     const drawTile = (ctx: CanvasRenderingContext2D, tile: any, x: number, y: number, isSelected: boolean) => {
-        // Draw special glow for special tiles
+        const cx = x + TILE_SIZE / 2;
+        const cy = y + TILE_SIZE / 2;
+
         if (tile.isSpecial) {
            ctx.save();
+           // Less expensive special effect outline
+           const glow = 10 + Math.sin(Date.now() / 150) * 5;
            ctx.shadowColor = tile.isSpecial === 'super' ? "rgba(255, 255, 255, 0.9)" : tile.color;
-           ctx.shadowBlur = 20 + Math.sin(Date.now() / 200) * 10;
+           ctx.shadowBlur = glow;
            ctx.beginPath();
-           ctx.roundRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4, 25);
-           ctx.strokeStyle = "white";
-           ctx.lineWidth = 3;
+           ctx.roundRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4, 30);
+           ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+           ctx.lineWidth = 4;
            ctx.stroke();
            ctx.restore();
         }
 
-        // Draw tile body with frosted theme radial gradient
-        const rg = ctx.createRadialGradient(
-          x + TILE_SIZE * 0.3, y + TILE_SIZE * 0.3, 0,
-          x + TILE_SIZE * 0.3, y + TILE_SIZE * 0.3, TILE_SIZE * 0.8
-        );
-        rg.addColorStop(0, tile.color);
-        rg.addColorStop(1, tile.base);
-        
-        ctx.fillStyle = rg;
+        // Base 3D shape (Rounded jelly)
+        // Background shadow for depth (OPTIMIZATION: Use offset rect instead of shadowBlur)
         if (!isSelected) {
-          ctx.shadowColor = "rgba(0,0,0,0.3)";
-          ctx.shadowBlur = 10;
-          ctx.shadowOffsetY = 4;
+          ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+          ctx.beginPath();
+          ctx.roundRect(x + 6, y + 8, TILE_SIZE - 8, TILE_SIZE - 8, 24);
+          ctx.fill();
         }
 
+        // Crystal Gradient (We will use a simpler linear gradient to save CPU instead of radial)
+        const lg = ctx.createLinearGradient(x, y, x + TILE_SIZE, y + TILE_SIZE);
+        lg.addColorStop(0, tile.color); // bright top-left
+        lg.addColorStop(1, tile.base);  // dark bottom-right
+        
+        ctx.fillStyle = lg;
         ctx.beginPath();
-        ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 22);
+        ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 24);
         ctx.fill();
 
-        // Glossy Highlight (Candy look)
+        // Top Gloss Highlight (Jelly shine)
         ctx.beginPath();
-        const highlightGradient = ctx.createLinearGradient(x, y + 8, x, y + TILE_SIZE * 0.4);
-        highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.4)");
+        const highlightGradient = ctx.createLinearGradient(x + 4, y + 4, x + 4, y + TILE_SIZE * 0.4);
+        highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.7)");
         highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = highlightGradient;
-        ctx.roundRect(x + 10, y + 8, TILE_SIZE - 20, TILE_SIZE * 0.3, 15);
+        ctx.roundRect(x + 6, y + 6, TILE_SIZE - 12, TILE_SIZE * 0.35, 18);
         ctx.fill();
 
-        // Subtle bottom inner shadow
+        // Bottom Reflected Light
         ctx.beginPath();
-        ctx.strokeStyle = "rgba(0,0,0,0.15)";
-        ctx.lineWidth = 2;
-        ctx.roundRect(x + 8, y + TILE_SIZE - 12, TILE_SIZE - 16, 2, 2);
-        ctx.stroke();
+        const bottomGlow = ctx.createLinearGradient(x, y + TILE_SIZE * 0.7, x, y + TILE_SIZE);
+        bottomGlow.addColorStop(0, "rgba(255, 255, 255, 0)");
+        bottomGlow.addColorStop(1, "rgba(255, 255, 255, 0.3)");
+        ctx.fillStyle = bottomGlow;
+        ctx.roundRect(x + 8, y + TILE_SIZE - 18, TILE_SIZE - 16, 12, 8);
+        ctx.fill();
 
-        // Reset shadow for text and other elements
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
+        // Outline reflection
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.lineWidth = 1;
+        ctx.roundRect(x + 5, y + 5, TILE_SIZE - 10, TILE_SIZE - 10, 22);
+        ctx.stroke();
 
         // Selection border
         if (isSelected) {
+          ctx.save();
           ctx.strokeStyle = "white";
-          ctx.lineWidth = 4;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = "white";
+          ctx.shadowBlur = 10;
           ctx.beginPath();
-          ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 22);
+          ctx.roundRect(x + 2, y + 2, TILE_SIZE - 4, TILE_SIZE - 4, 26);
           ctx.stroke();
+          ctx.restore();
         }
 
-        // Text
+        // Text rendering
         ctx.fillStyle = "white";
         ctx.font = tile.isSpecial ? "bold 18px 'Reem Kufi', sans-serif" : "bold 16px 'Reem Kufi', sans-serif"; 
         ctx.textAlign = "center";
         
-        // Add special icon for special tiles
         if (tile.isSpecial) {
-            ctx.font = "bold 24px Arial";
-            ctx.fillText(tile.isSpecial === 'super' ? "✨" : (tile.isSpecial === 'row' ? "↔️" : "↕️"), x + TILE_SIZE / 2, y + TILE_SIZE / 2 - 25);
-            ctx.font = "bold 16px 'Reem Kufi', sans-serif";
+             ctx.save();
+             ctx.font = "bold 24px Arial";
+             // Optimization: no shadow blur for emojis
+             ctx.fillText(tile.isSpecial === 'super' ? "✨" : (tile.isSpecial === 'row' ? "↔️" : "↕️"), cx, cy - 25);
+             ctx.restore();
+             ctx.font = "bold 16px 'Reem Kufi', sans-serif";
         }
 
         const lines = tile.text.split('\n');
-        const lineHeight = 20;
+        const lineHeight = 19;
         const totalHeight = lines.length * lineHeight;
-        const startY = y + TILE_SIZE / 2 - totalHeight / 2 + lineHeight / 2;
+        const startY = cy - totalHeight / 2 + lineHeight / 2 + (tile.isSpecial ? 8 : 4);
         
+        ctx.save();
+        // OPTIMIZATION: Instead of shadowBlur, draw offset text
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
         lines.forEach((line: string, i: number) => {
-          ctx.shadowColor = "rgba(0,0,0,0.4)";
-          ctx.shadowBlur = 4;
-          ctx.shadowOffsetY = 2;
-          ctx.fillText(line, x + TILE_SIZE / 2, startY + (i * lineHeight));
-          ctx.shadowColor = "transparent";
+          ctx.fillText(line, cx, startY + (i * lineHeight) + 2); // Shadow
         });
+        ctx.fillStyle = "white";
+        lines.forEach((line: string, i: number) => {
+          ctx.fillText(line, cx, startY + (i * lineHeight));
+        });
+        ctx.restore();
     };
 
     const render = () => {
       ctx.clearRect(0, 0, COLS * TILE_SIZE, ROWS * TILE_SIZE);
       
+      // Draw grid background
+      for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+              ctx.fillStyle = (r + c) % 2 === 0 ? "rgba(255, 255, 255, 0.04)" : "rgba(255, 255, 255, 0.08)";
+              ctx.beginPath();
+              ctx.roundRect(c * TILE_SIZE + 2, r * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4, 16);
+              ctx.fill();
+          }
+      }
+      
       const draggedTiles: any[] = [];
       
-      boardRef.current.forEach(row => row.forEach(tile => {
+      boardRef.current.forEach((row, r) => row.forEach((tile, c) => {
         if (!tile) return;
         
         const isSelected = firstTileRef.current?.r === tile.r && firstTileRef.current?.c === tile.c;
@@ -531,8 +559,8 @@ export default function App() {
         let executionTime = time - startTime;
         let progress = Math.min(executionTime / duration, 1);
         
-        // Math_easeOutQuad
-        const ease = progress * (2 - progress);
+        // Smooth easeInOutSine for organic gummy feel
+        const ease = -(Math.cos(Math.PI * progress) - 1) / 2;
 
         if (tile1) { tile1.offsetX = dx * ease; tile1.offsetY = dy * ease; }
         if (tile2) { tile2.offsetX = -dx * ease; tile2.offsetY = -dy * ease; }
@@ -597,18 +625,37 @@ export default function App() {
       }
 
       const startTime = performance.now();
-      const fallDuration = 300; 
 
       const anim = (now: number) => {
         const elapsed = now - startTime;
-        const progress = Math.min(elapsed / fallDuration, 1);
-        
-        // Elastic landing feel
-        const ease = 1 - Math.pow(1 - progress, 3);
         
         let allDone = true;
         boardRef.current.forEach((row, ri) => row.forEach((tile, ci) => {
           if (tile && initialOffsets[ri][ci] !== 0) {
+            // Speed: ~800 pixels per second (adjusted for realistic gravity)
+            const pixelsToFall = Math.abs(initialOffsets[ri][ci]);
+            // Give a baseline minimum duration + distance based
+            const fallDuration = 100 + (pixelsToFall / TILE_SIZE) * 40; 
+            
+            const progress = Math.min(elapsed / fallDuration, 1);
+            
+            // Rebound bounce curve: falls quick, tiny bounce at end
+            // progress = 0..1
+            // A simple spring or bounce out. 
+            // In Candy Crush, there is a small bounce. We'll use a fast easeInOut or easeOutBounce approximation
+            let ease;
+            if (progress < 0.8) {
+               // Fall down quickly
+               const p = progress / 0.8;
+               ease = p * p; // Accelerate down
+            } else {
+               // Tiny bounce
+               const p = (progress - 0.8) / 0.2;
+               ease = 1 - Math.sin(p * Math.PI) * 0.15;
+            }
+            // clamp ease
+            if (progress >= 1) ease = 1;
+
             if (progress < 1) {
               tile.offsetY = initialOffsets[ri][ci] * (1 - ease);
               allDone = false;
@@ -944,33 +991,23 @@ export default function App() {
 
     let cachedRect: DOMRect | null = null;
 
-    const getScaledCoords = (e: MouseEvent | TouchEvent, useCache = false) => {
+    const getScaledCoords = (e: PointerEvent, useCache = false) => {
       const rect = useCache && cachedRect ? cachedRect : canvas.getBoundingClientRect();
       if (!useCache) cachedRect = rect;
       
-      const isTouch = 'touches' in e;
-      let clientX, clientY;
-      if (isTouch) {
-        const touchEvent = e as TouchEvent;
-        const touch = touchEvent.touches[0] || touchEvent.changedTouches[0];
-        clientX = touch.clientX;
-        clientY = touch.clientY;
-      } else {
-        const mouseEvent = e as MouseEvent;
-        clientX = mouseEvent.clientX;
-        clientY = mouseEvent.clientY;
-      }
-
       // حساب معامل التحجيم بناءً على العرض والارتفاع الفعلي للكانفاس مقابل حجم العرض في المتصفح
       // هذا يعيد الإحداثيات إلى مقياس TILE_SIZE الأساسي
-      const x = ((clientX - rect.left) / rect.width) * (COLS * TILE_SIZE);
-      const y = ((clientY - rect.top) / rect.height) * (ROWS * TILE_SIZE);
+      const x = ((e.clientX - rect.left) / rect.width) * (COLS * TILE_SIZE);
+      const y = ((e.clientY - rect.top) / rect.height) * (ROWS * TILE_SIZE);
       
       return { x, y };
     };
 
-    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       if (e.cancelable) e.preventDefault();
+      
+      // Capture pointer so move events fire even if pointer leaves element
+      canvas.setPointerCapture(e.pointerId);
       
       lastInteractionTimeRef.current = Date.now();
       hintMoveRef.current = false;
@@ -1011,7 +1048,7 @@ export default function App() {
       vibrate(10);
     };
 
-    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       if (e.cancelable) e.preventDefault();
       if (isAnimatingRef.current || !dragStartRef.current || !firstTileRef.current) return;
       
@@ -1027,93 +1064,38 @@ export default function App() {
         return;
       }
 
-      if (!dragDirectionRef.current) {
-         if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 4) dragDirectionRef.current = 'x';
-         else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 4) dragDirectionRef.current = 'y';
-      }
-
-      if (dragDirectionRef.current === 'x') dy = 0;
-      else if (dragDirectionRef.current === 'y') dx = 0;
-      
-      // 1:1 MOVEMENT: Tile follows finger exactly
-      tile.offsetX = dx;
-      tile.offsetY = dy;
-
-      // SWIPE_THRESHOLD remains sensitive to allow edges to trigger easily
       const moveDist = Math.max(Math.abs(dx), Math.abs(dy));
-      const SWIPE_THRESHOLD = TILE_SIZE * 0.18; 
+      // Standard match-3 trigger distance: approx 30% of a tile
+      const SWIPE_THRESHOLD = TILE_SIZE * 0.3; 
 
       if (moveDist > SWIPE_THRESHOLD) {
-        const isX = Math.abs(dx) > Math.abs(dy);
-        const tr = r + (isX ? 0 : (dy > 0 ? 1 : -1));
-        const tc = c + (isX ? (dx > 0 ? 1 : -1) : 0);
+        let tr = r, tc = c;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            tc += dx > 0 ? 1 : -1;
+        } else {
+            tr += dy > 0 ? 1 : -1;
+        }
 
         if (tr >= 0 && tr < ROWS && tc >= 0 && tc < COLS) {
-           tile.offsetX = 0;
-           tile.offsetY = 0;
-           boardRef.current.forEach(row => row.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
            dragStartRef.current = null;
            firstTileRef.current = null;
-           vibrate(20); // Tactical haptic
+           
+           if (canvas.hasPointerCapture(e.pointerId)) {
+             canvas.releasePointerCapture(e.pointerId);
+           }
+           
            trySwap(r, c, tr, tc);
            return;
-        }
-      } else {
-        // Feedback for neighbor
-        let sideR = r, sideC = c;
-        if (Math.abs(dx) > Math.abs(dy)) sideC += (dx > 0 ? 1 : -1);
-        else sideR += (dy > 0 ? 1 : -1);
-        
-        if (sideR >= 0 && sideR < ROWS && sideC >= 0 && sideC < COLS) {
-            const neighbor = boardRef.current[sideR][sideC];
-            if (neighbor) {
-                boardRef.current.forEach(row => row.forEach(t => { if (t && t !== tile && t !== neighbor) { t.offsetX = 0; t.offsetY = 0; } }));
-                neighbor.offsetX = Math.abs(dx) > Math.abs(dy) ? -dx : 0;
-                neighbor.offsetY = Math.abs(dx) > Math.abs(dy) ? 0 : -dy;
-            }
         }
       }
     };
 
-    const handlePointerUp = (e: MouseEvent | TouchEvent) => {
+    const handlePointerUp = (e: PointerEvent) => {
+      if (canvas.hasPointerCapture(e.pointerId)) {
+        canvas.releasePointerCapture(e.pointerId);
+      }
       lastInteractionTimeRef.current = Date.now();
       hintMoveRef.current = false;
-      // Ensure visual reset even on missed state
-      if (!dragStartRef.current) {
-        boardRef.current.forEach(row => row?.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
-        return;
-      }
-
-      if (firstTileRef.current) {
-         const { r, c } = firstTileRef.current;
-         const tile = boardRef.current[r]?.[c];
-         
-         if (tile && (tile.offsetX !== 0 || tile.offsetY !== 0)) {
-             // RUBBER BAND EFFECT: Ultra-fast return for snappy feel
-             const duration = 80; 
-             const startTime = performance.now();
-             const startX = tile.offsetX;
-             const startY = tile.offsetY;
-             
-             const returnAnim = (time: number) => {
-                 const elapsed = time - startTime;
-                 const progress = Math.min(1, elapsed / duration);
-                 // Linear out for mechanical feel, or easeOut for organic. Using simple linear for speed.
-                 const ease = progress; 
-                 
-                 if (progress < 1) {
-                     tile.offsetX = startX * (1 - ease);
-                     tile.offsetY = startY * (1 - ease);
-                     requestAnimationFrame(returnAnim);
-                 } else {
-                     tile.offsetX = 0;
-                     tile.offsetY = 0;
-                     boardRef.current.forEach(row => row?.forEach(t => { if (t) { t.offsetX = 0; t.offsetY = 0; } }));
-                 }
-             };
-             requestAnimationFrame(returnAnim);
-         }
-      }
       dragStartRef.current = null;
     };
 
@@ -1164,23 +1146,18 @@ export default function App() {
     initBoard();
     render();
 
-    canvas.addEventListener('mousedown', handlePointerDown as EventListener, { passive: false });
-    canvas.addEventListener('mousemove', handlePointerMove as EventListener, { passive: false });
-    window.addEventListener('mouseup', handlePointerUp as EventListener, { passive: false });
-    
-    canvas.addEventListener('touchstart', handlePointerDown as EventListener, { passive: false });
-    canvas.addEventListener('touchmove', handlePointerMove as EventListener, { passive: false });
-    window.addEventListener('touchend', handlePointerUp as EventListener, { passive: false });
+    canvas.addEventListener('pointerdown', handlePointerDown as EventListener, { passive: false });
+    canvas.addEventListener('pointermove', handlePointerMove as EventListener, { passive: false });
+    canvas.addEventListener('pointerup', handlePointerUp as EventListener, { passive: false });
+    canvas.addEventListener('pointercancel', handlePointerUp as EventListener, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
         cancelAnimationFrame(animationFrameId);
-        canvas.removeEventListener('mousedown', handlePointerDown as EventListener);
-        canvas.removeEventListener('mousemove', handlePointerMove as EventListener);
-        window.removeEventListener('mouseup', handlePointerUp as EventListener);
-        canvas.removeEventListener('touchstart', handlePointerDown as EventListener);
-        canvas.removeEventListener('touchmove', handlePointerMove as EventListener);
-        window.removeEventListener('touchend', handlePointerUp as EventListener);
+        canvas.removeEventListener('pointerdown', handlePointerDown as EventListener);
+        canvas.removeEventListener('pointermove', handlePointerMove as EventListener);
+        canvas.removeEventListener('pointerup', handlePointerUp as EventListener);
+        canvas.removeEventListener('pointercancel', handlePointerUp as EventListener);
         window.removeEventListener('keydown', handleKeyDown);
         window.speechSynthesis?.cancel();
         if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
@@ -1290,7 +1267,7 @@ export default function App() {
         {floatingWords.map(w => (
           <motion.div 
             key={w.id} 
-            initial={{ opacity: 0, y: 50, scale: 0.3, x: "-50%" }}
+            initial={{ opacity: 0, y: 50, scale: 1, x: "-50%" }}
             animate={{ 
               opacity: [0, 1, 1, 0.8, 0],
               y: -window.innerHeight - 300,
@@ -1301,13 +1278,12 @@ export default function App() {
                 `calc(-50% + ${w.drift * 0.15}px)`,
                 `calc(-50% + ${w.drift * 0.4}px)`
               ],
-              scale: [0.3, 1.2, 1.1, 1, 0.5]
+              scale: 1
             }}
             transition={{ 
               y: { duration: 12, ease: "linear" }, 
               x: { duration: 12, ease: "easeInOut", times: [0, 0.25, 0.5, 0.75, 1] },
-              opacity: { duration: 12, times: [0, 0.05, 0.6, 0.8, 1] },
-              scale: { duration: 0.8, ease: "backOut" }
+              opacity: { duration: 12, times: [0, 0.05, 0.6, 0.8, 1] }
             }}
             className="fixed pointer-events-none z-[200] flex flex-col items-center"
             style={{ left: w.x, top: w.y }}
