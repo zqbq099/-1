@@ -210,7 +210,7 @@ export default function App() {
       playMatchSound(isSuper);
 
       // Balanced density for beauty and performance (fewer than before)
-      const count = isSuper ? 6 : 3; 
+      const count = isSuper ? 12 : 7; 
       
       // Precise color detection for variety
       let flowers = ["🌸"]; 
@@ -224,7 +224,7 @@ export default function App() {
       for(let i = 0; i < count; i++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
         const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (2 + Math.random() * 5) * 20; 
+        const speed = (1.5 + Math.random() * 3); 
         
         particlesRef.current.push({
           x: x, y: y,
@@ -1267,7 +1267,7 @@ export default function App() {
         {floatingWords.map(w => (
           <motion.div 
             key={w.id} 
-            initial={{ opacity: 0, y: 50, scale: 1, x: "-50%" }}
+            initial={{ opacity: 0, y: 50, scale: 0.5, x: "-50%" }}
             animate={{ 
               opacity: [0, 1, 1, 0.8, 0],
               y: -window.innerHeight - 300,
@@ -1278,7 +1278,7 @@ export default function App() {
                 `calc(-50% + ${w.drift * 0.15}px)`,
                 `calc(-50% + ${w.drift * 0.4}px)`
               ],
-              scale: 1
+              scale: 0.5
             }}
             transition={{ 
               y: { duration: 12, ease: "linear" }, 
