@@ -274,7 +274,7 @@ export default function App() {
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         
-        ctx.font = `${Math.floor(p.size)}px Arial`;
+        ctx.font = `${Math.floor(p.size)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
         ctx.fillText(p.char, 0, 0);
         
         ctx.restore();
@@ -308,39 +308,30 @@ export default function App() {
           ctx.fill();
         }
 
-        // Crystal Gradient (We will use a simpler linear gradient to save CPU instead of radial)
-        const lg = ctx.createLinearGradient(x, y, x + TILE_SIZE, y + TILE_SIZE);
-        lg.addColorStop(0, tile.color); // bright top-left
-        lg.addColorStop(1, tile.base);  // dark bottom-right
+        // Soft Candy Gradient (Radial for depth)
+        const rg = ctx.createRadialGradient(cx - TILE_SIZE*0.2, cy - TILE_SIZE*0.2, TILE_SIZE*0.1, cx, cy, TILE_SIZE*0.5);
+        rg.addColorStop(0, tile.color); 
+        rg.addColorStop(1, tile.base);
         
-        ctx.fillStyle = lg;
+        ctx.fillStyle = rg;
         ctx.beginPath();
-        ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 24);
+        ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 22);
         ctx.fill();
 
-        // Top Gloss Highlight (Jelly shine)
+        // Soft Jelly Highlight
         ctx.beginPath();
-        const highlightGradient = ctx.createLinearGradient(x + 4, y + 4, x + 4, y + TILE_SIZE * 0.4);
-        highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.7)");
+        const highlightGradient = ctx.createLinearGradient(x, y + 10, x, y + TILE_SIZE * 0.4);
+        highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.4)");
         highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = highlightGradient;
-        ctx.roundRect(x + 6, y + 6, TILE_SIZE - 12, TILE_SIZE * 0.35, 18);
+        ctx.roundRect(x + 10, y + 8, TILE_SIZE - 20, TILE_SIZE * 0.25, 15);
         ctx.fill();
 
-        // Bottom Reflected Light
+        // Subtle Inner Glow
         ctx.beginPath();
-        const bottomGlow = ctx.createLinearGradient(x, y + TILE_SIZE * 0.7, x, y + TILE_SIZE);
-        bottomGlow.addColorStop(0, "rgba(255, 255, 255, 0)");
-        bottomGlow.addColorStop(1, "rgba(255, 255, 255, 0.3)");
-        ctx.fillStyle = bottomGlow;
-        ctx.roundRect(x + 8, y + TILE_SIZE - 18, TILE_SIZE - 16, 12, 8);
-        ctx.fill();
-
-        // Outline reflection
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(255,255,255,0.2)";
-        ctx.lineWidth = 1;
-        ctx.roundRect(x + 5, y + 5, TILE_SIZE - 10, TILE_SIZE - 10, 22);
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 2;
+        ctx.roundRect(x + 6, y + 6, TILE_SIZE - 12, TILE_SIZE - 12, 20);
         ctx.stroke();
 
         // Selection border
@@ -363,7 +354,7 @@ export default function App() {
         
         if (tile.isSpecial) {
              ctx.save();
-             ctx.font = "bold 24px Arial";
+             ctx.font = 'bold 24px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
              // Optimization: no shadow blur for emojis
              ctx.fillText(tile.isSpecial === 'super' ? "✨" : (tile.isSpecial === 'row' ? "↔️" : "↕️"), cx, cy - 25);
              ctx.restore();
