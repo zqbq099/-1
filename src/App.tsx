@@ -224,7 +224,7 @@ export default function App() {
       for(let i = 0; i < count; i++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
         const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (1.5 + Math.random() * 3); 
+        const speed = (6 + Math.random() * 6); 
         
         particlesRef.current.push({
           x: x, y: y,
@@ -274,7 +274,7 @@ export default function App() {
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         
-        ctx.font = `${p.size}px Arial`;
+        ctx.font = `${Math.floor(p.size)}px Arial`;
         ctx.fillText(p.char, 0, 0);
         
         ctx.restore();
@@ -1288,23 +1288,8 @@ export default function App() {
             className="fixed pointer-events-none z-[200] flex flex-col items-center"
             style={{ left: w.x, top: w.y }}
           >
-            {/* The Bubble Visual */}
-            <div className={`relative px-8 py-8 rounded-full backdrop-blur-xl border border-white/30 flex items-center justify-center min-w-[120px] ${w.type === 'combo' ? 'bg-amber-400/30' : 'bg-emerald-400/20'}`}
-                 style={{ 
-                   boxShadow: `0 0 50px ${w.type === 'combo' ? 'rgba(251,191,36,0.4)' : 'rgba(52,211,153,0.3)'}, inset 0 0 30px rgba(255,255,255,0.4)`,
-                   borderRadius: '60% 40% 70% 30% / 40% 60% 30% 70%', // Wobbling bubble shape
-                 }}
-            >
-              {/* Highlight on bubble */}
-              <div className="absolute top-4 left-6 w-6 h-4 bg-white/40 blur-sm rounded-full -rotate-45" />
-              
-              <div className="flex flex-col items-center text-center">
-                {w.text.split('\n').map((line, i) => (
-                  <div key={i} className={`font-black tracking-tighter leading-tight ${w.type === 'combo' ? 'text-4xl text-amber-100 drop-shadow-lg' : 'text-2xl text-white'}`}>
-                    {line}
-                  </div>
-                ))}
-              </div>
+            <div className={`font-black tracking-tighter leading-tight drop-shadow-md text-center ${w.type === 'combo' ? 'text-5xl text-amber-300' : 'text-3xl text-white'}`}>
+              {w.text}
             </div>
           </motion.div>
         ))}
