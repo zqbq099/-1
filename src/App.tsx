@@ -66,6 +66,7 @@ export default function App() {
   const [combo, setCombo] = useState(0);
   const [comboMessage, setComboMessage] = useState("");
   const comboRef = useRef(0);
+  const statsRef = useRef<{ [key: string]: number }>({});
 
   const [floatingWords, setFloatingWords] = useState<Array<{id: string, text: string, x: number, y: number, drift: number, type?: 'score' | 'combo'}>>([]);
   const [noMoves, setNoMoves] = useState(false);
@@ -763,6 +764,9 @@ export default function App() {
          scoreRef.current += points;
          setScore(scoreRef.current);
 
+         const zikirText = matchedTile.text.replace(/\n/g, ' ');
+         statsRef.current[zikirText] = (statsRef.current[zikirText] || 0) + matches.size;
+
          if (comboRef.current > 1) {
             const messages = ["مَا شَاءَ اللَّه", "تَبَارَكَ اللَّه", "أَحْسَنْت", "تَسْبِيحٌ مُبَارَك"];
             const msg = messages[Math.floor(Math.random() * messages.length)];
@@ -1250,6 +1254,7 @@ export default function App() {
                 difficultyRef.current = d;
                 setScore(0);
                 scoreRef.current = 0;
+                statsRef.current = {};
                 setLevel(1);
                 levelRef.current = 1;
                 isAnimatingRef.current = false;
@@ -1487,6 +1492,20 @@ export default function App() {
               </motion.p>
               
               <div className="w-full h-px bg-white/10 my-8" />
+
+              {Object.keys(statsRef.current).length > 0 && (
+                <div className="flex flex-col gap-2 w-full text-right mb-6 text-sm max-h-32 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+                  {Object.entries(statsRef.current)
+                    .filter(([_, count]) => count > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([zikir, count]) => (
+                    <div key={zikir} className="flex justify-between items-center bg-white/5 rounded-lg px-4 py-2 border border-white/5">
+                      <span className="text-amber-500 font-bold ml-4">{count}</span>
+                      <span className="text-white w-full text-right truncate" dir="rtl">{zikir}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               
               <motion.div
                 initial={{ opacity: 0 }}
@@ -1516,6 +1535,7 @@ export default function App() {
                   setLevel(nextLevel);
                   levelRef.current = nextLevel;
                   setShowLevelUp(false);
+                  statsRef.current = {};
                   scoreRef.current = 0;
                   setScore(0);
                   gameActionsRef.current?.initBoard();
@@ -1617,7 +1637,7 @@ export default function App() {
                 لقد أتممت جميع المراحل بنجاح وجمعت الكثير من الحسنات.
               </p>
 
-              <div className="grid grid-cols-2 gap-4 w-full mb-10">
+              <div className="grid grid-cols-2 gap-4 w-full mb-6">
                 <div className="glass p-4 rounded-3xl flex flex-col items-center">
                   <span className="text-[10px] text-slate-500 font-black uppercase mb-1">المجموع النهائي</span>
                   <span className="text-2xl font-black text-white">{score}</span>
@@ -1628,9 +1648,25 @@ export default function App() {
                 </div>
               </div>
 
+              {Object.keys(statsRef.current).length > 0 && (
+                <div className="flex flex-col gap-2 w-full text-right mb-10 text-sm max-h-40 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+                  <span className="text-[10px] text-slate-500 font-black uppercase text-center mb-2">إحصائيات التسبيحات</span>
+                  {Object.entries(statsRef.current)
+                    .filter(([_, count]) => count > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([zikir, count]) => (
+                    <div key={zikir} className="flex justify-between items-center bg-white/5 rounded-lg px-4 py-2 border border-white/5">
+                      <span className="text-amber-500 font-bold ml-4">{count}</span>
+                      <span className="text-white w-full text-right truncate" dir="rtl">{zikir}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <button 
                 onClick={() => {
                   setScore(0);
+                  statsRef.current = {};
                   scoreRef.current = 0;
                   setLevel(1);
                   levelRef.current = 1;

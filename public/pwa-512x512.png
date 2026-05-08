@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="tileGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b45309;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gloss" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.5" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+  <!-- Main Button Shape -->
+  <rect x="20" y="20" width="472" height="472" rx="120" fill="url(#tileGrad)" stroke="#92400e" stroke-width="4"/>
+  
+  <!-- Inner Shadow/Glow -->
+  <rect x="40" y="40" width="432" height="432" rx="100" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.2"/>
+  
+  <!-- Glossy Overlay -->
+  <path d="M40,140 Q40,40 140,40 L372,40 Q472,40 472,140 Q472,240 256,240 Q40,240 40,140" fill="url(#gloss)" />
+  
+  <!-- Arabic Text -->
+  <text x="256" y="320" font-family="Arial, sans-serif" font-weight="bold" font-size="120" fill="#ffffff" text-anchor="middle" style="filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.3))">
+    <tspan x="256" dy="0">سُبْحَانَ</tspan>
+    <tspan x="256" dy="100">اللَّه</tspan>
+  </text>
+  
+  <!-- Bottom Highlight -->
+  <path d="M100,460 L412,460" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-opacity="0.1"/>
+</svg>

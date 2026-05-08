@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="tileGradSmall" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b45309;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glossSmall" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.5" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="176" height="176" rx="40" fill="url(#tileGradSmall)" stroke="#92400e" stroke-width="2"/>
+  <path d="M15,50 Q15,15 50,15 L142,15 Q177,15 177,50 Q177,90 96,90 Q15,90 15,50" fill="url(#glossSmall)" />
+  <text x="96" y="125" font-family="Arial, sans-serif" font-weight="bold" font-size="45" fill="#ffffff" text-anchor="middle">
+    <tspan x="96" dy="0">سُبْحَانَ</tspan>
+    <tspan x="96" dy="40">اللَّه</tspan>
+  </text>
+</svg>
