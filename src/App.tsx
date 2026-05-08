@@ -560,39 +560,34 @@ export default function App() {
       let isFalling = false;
       const currData = getCurrZikirData();
       
-      // Phase 1: Solidify current board state logic (where things will end up)
+      const initialOffsets = boardRef.current.map(row => row.map(tile => 0));
+
       for (let c = 0; c < COLS; c++) {
         let emptySpot = ROWS - 1;
         for (let r = ROWS - 1; r >= 0; r--) {
           if (boardRef.current[r][c]) {
-            let tile = boardRef.current[r][c];
+            const tile = boardRef.current[r][c];
             if (r !== emptySpot) {
               const startR = r;
               const targetR = emptySpot;
-              
               boardRef.current[r][c] = null;
               boardRef.current[targetR][c] = tile;
               tile.r = targetR;
-              
-              // Set initial visual offset
               tile.offsetY = (startR - targetR) * TILE_SIZE;
+              initialOffsets[targetR][c] = tile.offsetY;
               isFalling = true;
             }
             emptySpot--;
           }
         }
 
-        // Phase 2: Create new tiles falling from top
-        let spawnY = -TILE_SIZE;
         for (let r = emptySpot; r >= 0; r--) {
           const zikir = currData[Math.floor(Math.random() * currData.length)];
           const tile = { ...zikir, r, c, offsetX: 0, offsetY: 0 };
           boardRef.current[r][c] = tile;
-          
-          // Position them above visually
-          tile.offsetY = (-(emptySpot - r + 1) - 2) * TILE_SIZE;
+          tile.offsetY = (-(emptySpot - r + 1) - 3) * TILE_SIZE;
+          initialOffsets[r][c] = tile.offsetY;
           isFalling = true;
-          spawnY -= TILE_SIZE;
         }
       }
 
@@ -601,18 +596,14 @@ export default function App() {
         return;
       }
 
-      // Phase 3: Unified animation loop for ALL tiles
       const startTime = performance.now();
-      const dropDuration = 250; // Faster but smoother drop
-
-      // Store initial offsets to interpolate from them correctly
-      const initialOffsets = boardRef.current.map(row => row.map(tile => tile?.offsetY || 0));
+      const fallDuration = 300; 
 
       const anim = (now: number) => {
         const elapsed = now - startTime;
-        const progress = Math.min(elapsed / dropDuration, 1);
+        const progress = Math.min(elapsed / fallDuration, 1);
         
-        // Cubic ease-out for a natural "landing" feel
+        // Elastic landing feel
         const ease = 1 - Math.pow(1 - progress, 3);
         
         let allDone = true;
@@ -627,11 +618,10 @@ export default function App() {
           }
         }));
 
-        if (!allDone && progress < 1) {
+        if (!allDone) {
           requestAnimationFrame(anim);
         } else {
           boardRef.current.forEach(row => row.forEach(tile => { if (tile) tile.offsetY = 0; }));
-          // Immediate check for next match to keep the flow
           if (boardVersionRef.current === currentVersion) {
             const matched = checkMatches(true);
             if (!matched && !findPossibleMoves()) setNoMoves(true);
@@ -786,8 +776,9 @@ export default function App() {
               const screenX = rect.left + (c * TILE_SIZE + TILE_SIZE/2) * scaleX;
               const screenY = rect.top + (r * TILE_SIZE + TILE_SIZE/2) * scaleY;
               const id = Date.now().toString() + Math.random().toString();
-              setFloatingWords(prev => [...prev, { id, text: tile.text, x: screenX, y: screenY, drift: (Math.random() - 0.5) * 600 }]);
-              setTimeout(() => setFloatingWords(prev => prev.filter(w => w.id !== id)), 8000);
+              const drift = (Math.random() - 0.5) * 400;
+              setFloatingWords(prev => [...prev, { id, text: tile.text, x: screenX, y: screenY, drift }]);
+              setTimeout(() => setFloatingWords(prev => prev.filter(w => w.id !== id)), 10000);
            }
         }
         boardRef.current[r][c] = null;
@@ -970,10 +961,11 @@ export default function App() {
         clientY = mouseEvent.clientY;
       }
 
-      const scaleX = canvas.width / (dpr * rect.width);
-      const scaleY = canvas.height / (dpr * rect.height);
-      const x = Math.max(0, Math.min(COLS * TILE_SIZE - 1, (clientX - rect.left) * scaleX));
-      const y = Math.max(0, Math.min(ROWS * TILE_SIZE - 1, (clientY - rect.top) * scaleY));
+      // حساب معامل التحجيم بناءً على العرض والارتفاع الفعلي للكانفاس مقابل حجم العرض في المتصفح
+      // هذا يعيد الإحداثيات إلى مقياس TILE_SIZE الأساسي
+      const x = ((clientX - rect.left) / rect.width) * (COLS * TILE_SIZE);
+      const y = ((clientY - rect.top) / rect.height) * (ROWS * TILE_SIZE);
+      
       return { x, y };
     };
 
@@ -1047,8 +1039,9 @@ export default function App() {
       tile.offsetX = dx;
       tile.offsetY = dy;
 
+      // SWIPE_THRESHOLD remains sensitive to allow edges to trigger easily
       const moveDist = Math.max(Math.abs(dx), Math.abs(dy));
-      const SWIPE_THRESHOLD = TILE_SIZE * 0.15; // Even more sensitive
+      const SWIPE_THRESHOLD = TILE_SIZE * 0.18; 
 
       if (moveDist > SWIPE_THRESHOLD) {
         const isX = Math.abs(dx) > Math.abs(dy);
@@ -1197,11 +1190,10 @@ export default function App() {
   const progressPercentage = Math.min((score / targetScore) * 100, 100);
 
   return (
-    <div className="flex flex-col items-center min-h-screen relative font-sans overflow-hidden select-none touch-none overscroll-none"
+    <div className="flex flex-col items-center min-h-screen relative font-sans overflow-hidden select-none touch-none"
          style={{ 
            background: `radial-gradient(circle at center, ${bgColor} 0%, #020617 100%)`,
-           transition: 'background 0.8s ease-in-out',
-           overscrollBehavior: 'none'
+           transition: 'background 0.8s ease-in-out'
          }}>
       
       {/* Nature Theme Background Layers */}
@@ -1298,24 +1290,46 @@ export default function App() {
         {floatingWords.map(w => (
           <motion.div 
             key={w.id} 
-            initial={{ opacity: 0, y: 10, scale: 1, x: "-50%" }}
+            initial={{ opacity: 0, y: 50, scale: 0.3, x: "-50%" }}
             animate={{ 
               opacity: [0, 1, 1, 0.8, 0],
-              y: -window.innerHeight - 100,
-              x: `calc(-50% + ${w.drift}px)`
+              y: -window.innerHeight - 300,
+              x: [
+                "calc(-50% + 0px)",
+                `calc(-50% + ${w.drift * 0.25}px)`,
+                `calc(-50% - ${w.drift * 0.25}px)`,
+                `calc(-50% + ${w.drift * 0.15}px)`,
+                `calc(-50% + ${w.drift * 0.4}px)`
+              ],
+              scale: [0.3, 1.2, 1.1, 1, 0.5]
             }}
             transition={{ 
-              y: { duration: 8, ease: "linear" }, // Slightly faster floating
-              x: { duration: 8, ease: "easeOut" },
-              opacity: { duration: 8, times: [0, 0.1, 0.7, 0.9, 1] },
-              scale: { duration: 0 }
+              y: { duration: 12, ease: "linear" }, 
+              x: { duration: 12, ease: "easeInOut", times: [0, 0.25, 0.5, 0.75, 1] },
+              opacity: { duration: 12, times: [0, 0.05, 0.6, 0.8, 1] },
+              scale: { duration: 0.8, ease: "backOut" }
             }}
-            className={`fixed pointer-events-none font-black text-center z-[200] ${w.type === 'combo' ? 'text-amber-400 drop-shadow-[0_4px_15px_rgba(251,191,36,0.8)]' : 'text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]'}`}
+            className="fixed pointer-events-none z-[200] flex flex-col items-center"
             style={{ left: w.x, top: w.y }}
           >
-            {w.text.split('\n').map((line, i) => (
-              <div key={i} className={w.type === 'combo' ? 'text-4xl' : 'text-2xl tracking-tighter'}>{line}</div>
-            ))}
+            {/* The Bubble Visual */}
+            <div className={`relative px-8 py-8 rounded-full backdrop-blur-xl border border-white/30 flex items-center justify-center min-w-[120px] ${w.type === 'combo' ? 'bg-amber-400/30' : 'bg-emerald-400/20'}`}
+                 style={{ 
+                   boxShadow: `0 0 50px ${w.type === 'combo' ? 'rgba(251,191,36,0.4)' : 'rgba(52,211,153,0.3)'}, inset 0 0 30px rgba(255,255,255,0.4)`,
+                   borderRadius: '60% 40% 70% 30% / 40% 60% 30% 70%', // Wobbling bubble shape
+                 }}
+            >
+              {/* Highlight on bubble */}
+              <div className="absolute top-4 left-6 w-6 h-4 bg-white/40 blur-sm rounded-full -rotate-45" />
+              
+              <div className="flex flex-col items-center text-center">
+                {w.text.split('\n').map((line, i) => (
+                  <div key={i} className={`font-black tracking-tighter leading-tight ${w.type === 'combo' ? 'text-4xl text-amber-100 drop-shadow-lg' : 'text-2xl text-white'}`}>
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         ))}
       </AnimatePresence>
@@ -1370,11 +1384,11 @@ export default function App() {
         <div className="relative group w-full flex justify-center">
           <div className="absolute -inset-4 bg-gradient-to-r from-amber-500/10 to-purple-500/10 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-500 rounded-[60px] pointer-events-none" />
           
-          <div className="glass rounded-[56px] p-5 flex justify-center items-center shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] border border-white/10 relative w-fit z-[100] touch-none select-none">
+          <div className="glass rounded-[56px] p-5 flex justify-center items-center shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] border border-white/10 relative w-fit z-10">
             <canvas 
               ref={canvasRef} 
               onContextMenu={(e) => e.preventDefault()}
-              className="rounded-[36px] cursor-pointer relative z-[110] touch-none select-none"
+              className="rounded-[36px] cursor-pointer relative z-20 touch-none select-none"
               style={{ maxWidth: '100%', maxHeight: '75vh', width: 'auto', height: 'auto', objectFit: 'contain' }}
             />
             
