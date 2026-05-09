@@ -209,22 +209,29 @@ export default function App() {
       // Play stone clink sound
       playMatchSound(isSuper);
 
-      // Balanced density for beauty and performance (fewer than before)
-      const count = isSuper ? 12 : 7; 
+      // Balanced density for beauty (more flowers for better effect)
+      const count = isSuper ? 25 : 12; 
       
-      // Precise color detection for variety
-      let flowers = ["🌸"]; 
+      let flowers = ["🌸", "🌹", "🌺", "🌻", "🌼", "🌷", "💮"]; 
       const lowerColor = color.toLowerCase();
-      if (lowerColor.includes("239") || lowerColor.includes("red")) flowers = ["🌹", "🥀", "🍒"]; 
-      else if (lowerColor.includes("251") || lowerColor.includes("yellow")) flowers = ["🌼", "🌻", "🍋"]; 
-      else if (lowerColor.includes("59") || lowerColor.includes("blue")) flowers = ["🌺", "💠", "💎"]; 
-      else if (lowerColor.includes("34") || lowerColor.includes("green")) flowers = ["🌷", "🌿", "🍃"]; 
-      else if (lowerColor.includes("255") || lowerColor.includes("white")) flowers = ["💮", "☁️", "🤍"];
+      
+      // Match colored emojis to the tile color
+      if (lowerColor.includes("239") || lowerColor.includes("red")) {
+        flowers = ["🌹", "🍎", "🍎", "❤️", "🎈", "🍒"];
+      } else if (lowerColor.includes("251") || lowerColor.includes("yellow")) {
+        flowers = ["🌻", "🌼", "🍋", "💛", "⭐", "🐥"];
+      } else if (lowerColor.includes("59") || lowerColor.includes("blue")) {
+        flowers = ["🦋", "💙", "💦", "💎", "🐳"];
+      } else if (lowerColor.includes("34") || lowerColor.includes("green")) {
+        flowers = ["🍃", "🌿", "🌱", "🍀", "🍏", "💚"];
+      } else if (lowerColor.includes("purple") || lowerColor.includes("153")) {
+        flowers = ["🍇", "🍆", "💜", "🍭", "🍇"];
+      }
 
       for(let i = 0; i < count; i++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
         const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (6 + Math.random() * 6); 
+        const speed = (3 + Math.random() * 5); 
         
         particlesRef.current.push({
           x: x, y: y,
@@ -232,10 +239,10 @@ export default function App() {
           vy: Math.sin(angle) * speed,
           life: 1.0,
           char: flower,
-          size: 14 + Math.random() * 10,
+          size: 16 + Math.random() * 14,
           rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.4),
-          drift: (Math.random() - 0.5) * 0.2
+          rotSpeed: (Math.random() - 0.5) * 0.3,
+          drift: (Math.random() - 0.5) * 0.1
       });
     }
   };
@@ -308,30 +315,26 @@ export default function App() {
           ctx.fill();
         }
 
-        // Soft Candy Gradient (Radial for depth)
-        const rg = ctx.createRadialGradient(cx - TILE_SIZE*0.2, cy - TILE_SIZE*0.2, TILE_SIZE*0.1, cx, cy, TILE_SIZE*0.5);
-        rg.addColorStop(0, tile.color); 
-        rg.addColorStop(1, tile.base);
+        // Classic Candy Look (Solid gradient, no "ice" effects)
+        const lg = ctx.createLinearGradient(x, y, x, y + TILE_SIZE);
+        lg.addColorStop(0, tile.color); // Bright top
+        lg.addColorStop(1, tile.base);  // Darker bottom
         
-        ctx.fillStyle = rg;
+        ctx.fillStyle = lg;
         ctx.beginPath();
-        ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 22);
+        // Very rounded corners for "candy" feel
+        ctx.roundRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8, 20);
         ctx.fill();
 
-        // Soft Jelly Highlight
+        // Simple Shine (White arc at top)
         ctx.beginPath();
-        const highlightGradient = ctx.createLinearGradient(x, y + 10, x, y + TILE_SIZE * 0.4);
-        highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.4)");
-        highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-        ctx.fillStyle = highlightGradient;
-        ctx.roundRect(x + 10, y + 8, TILE_SIZE - 20, TILE_SIZE * 0.25, 15);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.roundRect(x + 10, y + 8, TILE_SIZE - 20, TILE_SIZE * 0.3, 12);
         ctx.fill();
 
-        // Subtle Inner Glow
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        // Border to separate from neighbors
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
         ctx.lineWidth = 2;
-        ctx.roundRect(x + 6, y + 6, TILE_SIZE - 12, TILE_SIZE - 12, 20);
         ctx.stroke();
 
         // Selection border
