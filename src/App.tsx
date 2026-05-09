@@ -191,14 +191,6 @@ export default function App() {
         // Main marble impact (Higher pitch than before) - Volume doubled
         playClink(now, 1200 + Math.random() * 200, 0.16); 
         
-        // Second subtle resonance for realism - Volume doubled
-        if (isSuper) {
-          playClink(now + 0.02, 2400, 0.08);
-          playClink(now + 0.04, 1800, 0.06);
-        } else {
-          playClink(now + 0.015, 1500, 0.04);
-        }
-        
         setTimeout(() => ctx.close(), 250);
       } catch (e) {
         console.error("Audio error", e);
@@ -206,32 +198,40 @@ export default function App() {
     };
 
     const createParticles = (x: number, y: number, color: string, isSuper = false) => {
-      // Play stone clink sound
       playMatchSound(isSuper);
 
-      // Balanced density for beauty (more flowers for better effect)
-      const count = isSuper ? 25 : 12; 
+      // Increased density for a "garden" feel
+      const count = isSuper ? 30 : 15; 
       
       let flowers = ["🌸", "🌹", "🌺", "🌻", "🌼", "🌷", "💮"]; 
+      let glowColor = color;
       const lowerColor = color.toLowerCase();
       
-      // Match colored emojis to the tile color
+      // Intensive color matching for "Am Abdo the Gardener"
       if (lowerColor.includes("239") || lowerColor.includes("red")) {
-        flowers = ["🌹", "🍎", "🍎", "❤️", "🎈", "🍒"];
+        flowers = ["🌹", "🌺", "🍒", "🍓", "❤️", "🍎", "🌶️"];
+        glowColor = "rgba(255, 0, 0, 0.8)";
       } else if (lowerColor.includes("251") || lowerColor.includes("yellow")) {
-        flowers = ["🌻", "🌼", "🍋", "💛", "⭐", "🐥"];
+        flowers = ["🌻", "🌼", "🍋", "⭐", "💛", "🐤", "🍌"];
+        glowColor = "rgba(255, 215, 0, 0.8)";
       } else if (lowerColor.includes("59") || lowerColor.includes("blue")) {
-        flowers = ["🦋", "💙", "💦", "💎", "🐳"];
+        flowers = ["🦋", "💎", "💙", "💦", "🧊", "🐳"];
+        glowColor = "rgba(0, 191, 255, 0.8)";
       } else if (lowerColor.includes("34") || lowerColor.includes("green")) {
-        flowers = ["🍃", "🌿", "🌱", "🍀", "🍏", "💚"];
+        flowers = ["🍃", "🌿", "🌱", "🍀", "🍏", "💚", "🥝"];
+        glowColor = "rgba(50, 205, 50, 0.8)";
       } else if (lowerColor.includes("purple") || lowerColor.includes("153")) {
-        flowers = ["🍇", "🍆", "💜", "🍭", "🍇"];
+        flowers = ["🍇", "🍆", "💜", "🔮", "🦄", "🍭"];
+        glowColor = "rgba(186, 85, 211, 0.8)";
+      } else if (lowerColor.includes("orange") || lowerColor.includes("249")) {
+        flowers = ["🍊", "🎃", "🧡", "🥕", "🔥"];
+        glowColor = "rgba(255, 140, 0, 0.8)";
       }
 
-      for(let i = 0; i < count; i++) {
+      for(let j = 0; j < count; j++) {
         const flower = flowers[Math.floor(Math.random() * flowers.length)];
-        const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
-        const speed = (3 + Math.random() * 5); 
+        const angle = (Math.PI * 2 / count) * j + (Math.random() - 0.5);
+        const speed = (2 + Math.random() * 6); 
         
         particlesRef.current.push({
           x: x, y: y,
@@ -239,10 +239,11 @@ export default function App() {
           vy: Math.sin(angle) * speed,
           life: 1.0,
           char: flower,
-          size: 16 + Math.random() * 14,
+          size: 18 + Math.random() * 14,
           rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() - 0.5) * 0.3,
-          drift: (Math.random() - 0.5) * 0.1
+          rotSpeed: (Math.random() - 0.5) * 0.4,
+          drift: (Math.random() - 0.5) * 0.15,
+          color: glowColor
       });
     }
   };
@@ -259,6 +260,7 @@ export default function App() {
         shakeRef.current.y = 0;
       }
 
+      ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
@@ -267,8 +269,8 @@ export default function App() {
         p.x += p.vx;
         p.y += p.vy;
         p.vx += Math.sin(p.rotation) * p.drift; 
-        p.vy += 0.9; // Gravity for jewels
-        p.life -= 0.035; // Slower fade for smooth effect
+        p.vy += 0.4; 
+        p.life -= 0.015; // Even slower for maximum beauty
         p.rotation += p.rotSpeed; 
         
         if (p.life <= 0) {
@@ -277,15 +279,29 @@ export default function App() {
         }
         
         ctx.save();
-        ctx.globalAlpha = p.life > 0.3 ? 1.0 : p.life / 0.3;
+        const alpha = p.life > 0.4 ? 1.0 : p.life / 0.4;
+        ctx.globalAlpha = alpha;
         ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
         
+        // Add a vibrant colorful glow blob behind the flower
+        const glowSize = p.size * 0.9;
+        const radialGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+        radialGlow.addColorStop(0, p.color);
+        radialGlow.addColorStop(0.5, p.color.replace('0.8', '0.3'));
+        radialGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = radialGlow;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.rotate(p.rotation);
         ctx.font = `${Math.floor(p.size)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
         ctx.fillText(p.char, 0, 0);
         
         ctx.restore();
       }
+      ctx.restore();
     };
 
     const drawTile = (ctx: CanvasRenderingContext2D, tile: any, x: number, y: number, isSelected: boolean) => {
